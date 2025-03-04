@@ -10,8 +10,8 @@ export class AttendanceService {
     private readonly attendanceRepo: Repository<Attendance>,
   ) {}
 
-  async markAttendance(mpId: string, status: string, photoPath?: string): Promise<Attendance> {
-    const attendance = this.attendanceRepo.create({ mpId, status, photoPath });
+  async markAttendance(regNumber: string, status: string, photoPath?: string): Promise<Attendance> {
+    const attendance = this.attendanceRepo.create({ status, photoPath });
     return await this.attendanceRepo.save(attendance);
   }
 

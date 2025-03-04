@@ -8,24 +8,26 @@ export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Mark attendance for an MP' })
+  @ApiOperation({ summary: 'Mark attendance for a student' })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        mpId: { type: 'string' },
-        status: { type: 'string', example: 'Present' },
+        regNumber: { type: 'string' },
+        name:{type: 'string'},
+        status: { type: 'string' },
         photoPath: { type: 'string', nullable: true },
       },
     },
   })
   @ApiResponse({ status: 201, description: 'Attendance marked successfully' })
   async markAttendance(
-    @Body('mpId') mpId: string,
+    @Body('regnumber') regnumber: string,
+    @Body('name') name: string,
     @Body('status') status: string,
     @Body('photoPath') photoPath?: string,
   ) {
-    return this.attendanceService.markAttendance(mpId, status, photoPath);
+    return this.attendanceService.markAttendance(regnumber, status, photoPath);
   }
 
   @Get()

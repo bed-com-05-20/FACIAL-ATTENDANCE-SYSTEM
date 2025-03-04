@@ -9,7 +9,7 @@ import { AttendanceModule } from './attendance/attendance.module';
       host: 'localhost',
       port: 5432,
       username: 'postgres',
-      password: 'password',
+      password: 'taya6000',
       database: 'attendance',
       autoLoadEntities: true,
       synchronize: true,

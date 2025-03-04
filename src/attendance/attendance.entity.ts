@@ -3,16 +3,16 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn } from 'typeor
 @Entity()
 export class Attendance {
   @PrimaryGeneratedColumn()
-  id: number;
+  regNumber: string;
 
   @Column()
-  mpId: string;
+  name: string;
 
   @Column()
-  status: string; // "Present" or "Absent"
+  status: string;
 
   @Column({ nullable: true })
-  photoPath?: string; // Path to image
+  photoPath?: string;
 
   @CreateDateColumn()
   timestamp: Date;
