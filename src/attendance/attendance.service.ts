@@ -1,21 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Attendance } from './attendance.entity';
+import { Student } from './student.entity';
 
 @Injectable()
 export class AttendanceService {
-  constructor(
-    @InjectRepository(Attendance)
-    private readonly attendanceRepo: Repository<Attendance>,
-  ) {}
+  constructor(@InjectRepository(Student) private studentRepo: Repository<Student>) {}
 
-  async markAttendance(regNumber: string, status: string, photoPath?: string): Promise<Attendance> {
-    const attendance = this.attendanceRepo.create({ status, photoPath });
-    return await this.attendanceRepo.save(attendance);
+  async markAttendance(registrationNumber: string, status: string) {
+    const student = await this.studentRepo.findOne({ where: { registrationNumber } });
+    if (!student) {
+      throw new Error('Student not found');
+    }
+
+    student.status = status;  // Update attendance
+    await this.studentRepo.save(student);
+    return { message: 'Attendance updated successfully', student };
   }
 
-  async getAttendanceRecords(): Promise<Attendance[]> {
-    return await this.attendanceRepo.find();
+  async getAttendanceRecords() {
+    return this.studentRepo.find();
   }
 }
