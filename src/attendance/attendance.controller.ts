@@ -9,8 +9,9 @@ export class AttendanceController {
 
   @Post()
   async markAttendance(
-    @Body('registrationNumber') registrationNumber: string,
-    @Body('status') status: string
+    @Body('registrationNumber') registrationNumber: number,
+    @Body('status') status: string,
+    @Body('name') name: string
   ) {
     return this.attendanceService.markAttendance(registrationNumber, status);
   }

@@ -7,7 +7,7 @@ import { Student } from './student.entity';
 export class AttendanceService {
   constructor(@InjectRepository(Student) private studentRepo: Repository<Student>) {}
 
-  async markAttendance(registrationNumber: string, status: string) {
+  async markAttendance(registrationNumber: number, status: string) {
     const student = await this.studentRepo.findOne({ where: { registrationNumber } });
     if (!student) {
       throw new Error('Student not found');

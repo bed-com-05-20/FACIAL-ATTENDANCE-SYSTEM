@@ -2,9 +2,8 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class Student {
-  
-  @Column({ unique: true })
-  registrationNumber: string;
+  @PrimaryGeneratedColumn()
+  registrationNumber: number;
 
   @Column()
   name: string;
