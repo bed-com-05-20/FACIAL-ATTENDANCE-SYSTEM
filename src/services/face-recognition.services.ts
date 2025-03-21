@@ -1,48 +1,3 @@
-// import { Injectable, OnModuleInit } from '@nestjs/common';
-// import * as faceapi from 'face-api.js';
-// import * as path from 'path';
-// import * as canvas from 'canvas'; // Import the canvas library
-
-// const { Canvas, Image, ImageData, loadImage } = canvas;
-
-// // Monkey-patch face-api.js to use node-canvas, casting types to avoid TypeScript errors
-// faceapi.env.monkeyPatch({
-//   Canvas: Canvas as unknown as { new (): HTMLCanvasElement; prototype: HTMLCanvasElement },
-//   Image: Image as unknown as { new (): HTMLImageElement; prototype: HTMLImageElement },
-//   ImageData: ImageData as unknown as { 
-//     new (sw: number, sh: number, settings?: ImageDataSettings): ImageData; 
-//     new (data: Uint8ClampedArray, sw: number, sh?: number, settings?: ImageDataSettings): ImageData; 
-//     prototype: ImageData; 
-//   },
-// });
-
-// @Injectable()
-// export class FaceRecognitionService implements OnModuleInit {
-//   async onModuleInit() {
-//     // Load models from the models directory
-//     const modelPath = path.join(__dirname, '..', 'models');
-//     await faceapi.nets.ssdMobilenetv1.loadFromDisk(modelPath);
-//     await faceapi.nets.faceLandmark68Net.loadFromDisk(modelPath);
-//     await faceapi.nets.faceRecognitionNet.loadFromDisk(modelPath);
-//   }
-
-//   async detectFace(imagePath: string) {
-//     try {
-//       // Load image using canvas' loadImage function
-//       const img = await loadImage(imagePath);
-
-//       // Perform face detection
-//       const detections = await faceapi.detectAllFaces(img as any) 
-//         .withFaceLandmarks()
-//         .withFaceDescriptors();
-
-//       return detections;
-//     } catch (error) {
-//       console.error('Error detecting face:', error);
-//       throw new Error('Face detection failed.');
-//     }
-//   }
-// }
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import * as faceapi from 'face-api.js';
 import * as fs from 'fs';
@@ -50,7 +5,6 @@ import * as path from 'path';
 import * as https from 'https';
 import * as unzipper from 'unzipper';
 import * as canvas from 'canvas';
-
 
 faceapi.env.monkeyPatch({
   Canvas: canvas.Canvas as any,  // Cast to `any` to avoid type conflicts
@@ -82,14 +36,58 @@ export class FaceRecognitionService implements OnModuleInit {
       fs.mkdirSync(this.modelPath, { recursive: true });
 
       const file = fs.createWriteStream(zipPath);
+      let fileSize = 0; // Initialize file size variable
+
       https.get(this.modelURL, (response) => {
+        if (response.statusCode !== undefined) {
+          this.logger.log(`Response status: ${response.statusCode}`);
+          if (response.statusCode >= 300 && response.statusCode < 400) {
+            const redirectUrl = response.headers.location;
+            if (redirectUrl) {
+              this.logger.log(`Redirecting to: ${redirectUrl}`);
+              https.get(redirectUrl, (redirectResponse) => {
+                redirectResponse.pipe(file);
+                redirectResponse.on('end', () => {
+                  this.logger.log('Download complete. Extracting...');
+                  fs.createReadStream(zipPath)
+                    .pipe(unzipper.Extract({ path: this.modelPath }))
+                    .on('close', async () => {
+                      // Check if the file size is greater than 0 before extraction
+                      fileSize = fs.statSync(zipPath).size;
+                      if (fileSize === 0) {
+                        this.logger.error('Downloaded file is empty. Extraction aborted.');
+                        return reject(new Error('Downloaded file is empty.'));
+                      }
+
+                      fs.unlinkSync(zipPath);
+                      this.logger.log('Model extraction complete.');
+                      resolve();
+                    })
+                    .on('error', reject);
+                });
+              }).on('error', reject);
+              return;
+            }
+          }
+        } else {
+          this.logger.error('Response status is undefined. Cannot proceed with download.');
+          return reject(new Error('Response status is undefined.'));
+        }
+
         response.pipe(file);
         file.on('finish', async () => {
           file.close();
           this.logger.log('Download complete. Extracting...');
           fs.createReadStream(zipPath)
             .pipe(unzipper.Extract({ path: this.modelPath }))
-            .on('close', () => {
+            .on('close', async () => {
+              // Check if the file size is greater than 0 before extraction
+              fileSize = fs.statSync(zipPath).size;
+              if (fileSize === 0) {
+                this.logger.error('Downloaded file is empty. Extraction aborted.');
+                return reject(new Error('Downloaded file is empty.'));
+              }
+
               fs.unlinkSync(zipPath);
               this.logger.log('Model extraction complete.');
               resolve();
@@ -110,7 +108,8 @@ export class FaceRecognitionService implements OnModuleInit {
   async detectFace(imageBuffer: Buffer) {
     try {
       const img = await canvas.loadImage(imageBuffer);
-      const detections = await faceapi.detectAllFaces('img')
+      const detections = await faceapi.detectAllFaces(img as unknown as HTMLImageElement)
+
         .withFaceLandmarks()
         .withFaceDescriptors();
 
