@@ -1,7 +1,8 @@
-import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FaceRecognitionService } from '../services/face-recognition.services';
-import { Express } from 'express'; 
+import { Multer } from 'multer';
+
 
 @Controller('face-recognition')
 export class FaceRecognitionController {
@@ -9,8 +10,15 @@ export class FaceRecognitionController {
 
   @Post('detect')
   @UseInterceptors(FileInterceptor('file'))
-  async detect(@UploadedFile() file: Express.Multer.File) { 
-    const detections = await this.faceRecognitionService.detectFace(file.path);
+  async detect(@UploadedFile() file: Multer.File)
+  { 
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // Pass the file buffer instead of path
+    const detections = await this.faceRecognitionService.detectFace(file.buffer);
+    
     return { detections };
   }
 }
