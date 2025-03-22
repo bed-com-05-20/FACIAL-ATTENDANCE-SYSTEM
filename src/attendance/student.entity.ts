@@ -3,12 +3,12 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 @Entity()
 export class Student {
   @PrimaryGeneratedColumn()
-  registrationNumber: number;
+  registrationNumber: string;
 
   @Column()
   name: string;
 
-  @Column({ default: 'Absent' })
+  @Column()
   status: string;  // "Present" or "Absent"
 }
 
