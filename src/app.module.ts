@@ -1,24 +1,7 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
-import { StudentsModule } from './enrollment/student.module';
-import { StudentEntity } from './entity/Student';
+import { AppService } from './app.service';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot(),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'nestuser',
-      password: 'nestpassword',
-      database: 'facial_attendance',
-      entities: [StudentEntity],
-      synchronize: true, 
-    }),
-    StudentsModule,
-  ],
+  imports: [],
 })
 export class AppModule {}
-
