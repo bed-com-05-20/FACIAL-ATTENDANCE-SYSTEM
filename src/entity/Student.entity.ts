@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column , CreateDateColumn} from "typeorm";
 
 @Entity()
 export class StudentEntity {
@@ -25,6 +25,9 @@ export class StudentEntity {
 
   @Column({ nullable: true })
   picture: string;
+
+  @CreateDateColumn()
+  timestamp: Date;
 
   @Column({ default: 'Absent' })
   attendanceStatus: string;

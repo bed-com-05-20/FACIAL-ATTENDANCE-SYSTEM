@@ -2,7 +2,7 @@ import { Controller, Post, Get, Body } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
-@ApiTags('Attendance') // Group in Swagger
+@ApiTags('Attendance') 
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
@@ -19,7 +19,7 @@ export class AttendanceController {
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Attendance marked successfully' })
+  
   async markAttendance(
     @Body('mpId') mpId: string,
     @Body('status') status: string,

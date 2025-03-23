@@ -9,10 +9,10 @@ export class Attendance {
   mpId: string;
 
   @Column()
-  status: string; // "Present" or "Absent"
+  status: string; 
 
   @Column({ nullable: true })
-  photoPath?: string; // Path to image
+  photoPath?: string; 
 
   @CreateDateColumn()
   timestamp: Date;
