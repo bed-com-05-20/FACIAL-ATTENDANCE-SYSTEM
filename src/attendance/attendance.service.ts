@@ -19,13 +19,13 @@ export class AttendanceService {
       throw new NotFoundException("Student not found");
     }
 
-    student.status = status; // ✅ Update status
+    student.status = status; //  Update status
     await this.studentRepo.save(student);
 
-    return student; // ✅ Return updated student with name, status, and registrationNumber
+    return student; // Return updated student with name, status, and registrationNumber
   }
 
   async getAttendanceRecords() {
-    return this.studentRepo.find(); // ✅ Fetch all students with their attendance status
+    return this.studentRepo.find(); //  Fetch all students with their attendance status
   }
 }
