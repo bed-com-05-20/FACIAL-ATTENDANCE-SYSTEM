@@ -30,7 +30,7 @@ export class FaceRecognitionService implements OnModuleInit {
     }
   }
 
-  private async downloadAndExtractModels() {
+  private async downloadAndExtractModels(retries: number = 3) {
     return new Promise<void>((resolve, reject) => {
       const zipPath = path.join(this.modelPath, 'models.zip');
       fs.mkdirSync(this.modelPath, { recursive: true });
@@ -38,63 +38,58 @@ export class FaceRecognitionService implements OnModuleInit {
       const file = fs.createWriteStream(zipPath);
       let fileSize = 0; // Initialize file size variable
 
-      https.get(this.modelURL, (response) => {
-        if (response.statusCode !== undefined) {
-          this.logger.log(`Response status: ${response.statusCode}`);
-          if (response.statusCode >= 300 && response.statusCode < 400) {
+      const download = (url: string) => {
+        https.get(url, (response) => {
+          if (response.statusCode === 302) {
             const redirectUrl = response.headers.location;
             if (redirectUrl) {
               this.logger.log(`Redirecting to: ${redirectUrl}`);
-              https.get(redirectUrl, (redirectResponse) => {
-                redirectResponse.pipe(file);
-                redirectResponse.on('end', () => {
-                  this.logger.log('Download complete. Extracting...');
-                  fs.createReadStream(zipPath)
-                    .pipe(unzipper.Extract({ path: this.modelPath }))
-                    .on('close', async () => {
-                      // Check if the file size is greater than 0 before extraction
-                      fileSize = fs.statSync(zipPath).size;
-                      if (fileSize === 0) {
-                        this.logger.error('Downloaded file is empty. Extraction aborted.');
-                        return reject(new Error('Downloaded file is empty.'));
-                      }
-
-                      fs.unlinkSync(zipPath);
-                      this.logger.log('Model extraction complete.');
-                      resolve();
-                    })
-                    .on('error', reject);
-                });
-              }).on('error', reject);
-              return;
+              return download(redirectUrl); // Follow the redirect
             }
           }
-        } else {
-          this.logger.error('Response status is undefined. Cannot proceed with download.');
-          return reject(new Error('Response status is undefined.'));
-        }
 
-        response.pipe(file);
-        file.on('finish', async () => {
-          file.close();
-          this.logger.log('Download complete. Extracting...');
-          fs.createReadStream(zipPath)
-            .pipe(unzipper.Extract({ path: this.modelPath }))
-            .on('close', async () => {
-              // Check if the file size is greater than 0 before extraction
-              fileSize = fs.statSync(zipPath).size;
-              if (fileSize === 0) {
-                this.logger.error('Downloaded file is empty. Extraction aborted.');
-                return reject(new Error('Downloaded file is empty.'));
-              }
+          if (response.statusCode !== 200) {
+            this.logger.error(`Failed to download model: ${response.statusCode}`);
+            if (retries > 0) {
+              this.logger.log(`Retrying download... (${3 - retries + 1})`);
+              return this.downloadAndExtractModels(retries - 1);
+            } else {
+              return reject(new Error('Failed to download model after multiple attempts.'));
+            }
+          }
 
-              fs.unlinkSync(zipPath);
-              this.logger.log('Model extraction complete.');
-              resolve();
-            })
-            .on('error', reject);
+          response.pipe(file);
+          file.on('finish', async () => {
+            file.close();
+            this.logger.log('Download complete. Extracting...');
+            fs.createReadStream(zipPath)
+              .pipe(unzipper.Extract({ path: this.modelPath }))
+              .on('close', async () => {
+                // Check if the file size is greater than 0 before extraction
+                fileSize = fs.statSync(zipPath).size;
+                if (fileSize === 0) {
+                  this.logger.error('Downloaded file is empty. Extraction aborted.');
+                  return reject(new Error('Downloaded file is empty.'));
+                }
+
+                fs.unlinkSync(zipPath);
+                this.logger.log('Model extraction complete.');
+                resolve();
+              })
+              .on('error', reject);
+          });
+        }).on('error', (err) => {
+          if (retries > 0) {
+            this.logger.warn(`Download failed, retrying... (${retries} attempts left)`);
+            download(url); // Retry the download
+            retries--;
+          } else {
+            reject(err);
+          }
         });
-      }).on('error', reject);
+      };
+
+      download(this.modelURL); // Start the download
     });
   }
 
@@ -109,7 +104,6 @@ export class FaceRecognitionService implements OnModuleInit {
     try {
       const img = await canvas.loadImage(imageBuffer);
       const detections = await faceapi.detectAllFaces(img as unknown as HTMLImageElement)
-
         .withFaceLandmarks()
         .withFaceDescriptors();
 
