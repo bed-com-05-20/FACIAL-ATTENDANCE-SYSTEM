@@ -5,7 +5,7 @@ import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
 import { UsersModule } from './users/users.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './users/users.entity';
+import { User } from './Entities/users.entity';
 import { FaceRecognitionController } from './services/face-recognition.controller';
 import { FaceRecognitionService } from './services/face-recognition.services';
 import { MulterModule } from '@nestjs/platform-express';
