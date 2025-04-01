@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class StudentDto {
+export class EnrollmentDto {
   @ApiProperty({ example: 'bed-com-05-20', description: 'Unique student registration number' })
   regNumber: string;
 

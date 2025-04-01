@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
-import { StudentsModule } from './enrollment/student.module';
-import { StudentEntity } from './entity/Student.entity';
-import { Attendance } from './entity/attendance.entity';
 import { AttendanceModule } from './attendance/attendance.module';
+import { EnrollmentModule } from './enrollment/enrollment.module';
+import { EnrollmentEntity } from './entity/enrollment.entity';
+import { AttendanceEntity } from './entity/attendance.entity';
 
 @Module({
   imports: [
@@ -16,10 +16,10 @@ import { AttendanceModule } from './attendance/attendance.module';
       username: 'nestuser',
       password: 'nestpassword',
       database: 'facial_attendance',
-      entities: [StudentEntity, Attendance],
+      entities: [EnrollmentEntity, AttendanceEntity],
       synchronize: true, 
     }),
-    StudentsModule, AttendanceModule,
+    EnrollmentModule, AttendanceModule,
   ],
 })
 export class AppModule {}

@@ -2,8 +2,8 @@ import { ApiProperty } from '@nestjs/swagger';
 
 export class MarkAttendanceDto {
   @ApiProperty()
-  registrationNumber: string;
+  regNumber: string;
 
   @ApiProperty()
-  status: string;
+  status: 'Present' | 'Absent';
 }
