@@ -1,14 +1,17 @@
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class Student {
   @PrimaryGeneratedColumn()
-  registrationNumber: string;
+  id: number;
 
   @Column()
   name: string;
 
-  @Column()
-  status: string;  // "Present" or "Absent"
-}
+  @Column({ nullable: true })
+  registrationNumber: string;
+  
 
+  @Column({ default: 'absent' }) // or null if not marked yet
+  status: string;
+}
