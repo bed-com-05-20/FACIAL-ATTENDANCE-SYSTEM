@@ -19,8 +19,10 @@ export class FaceRecognitionService implements OnModuleInit {
   private readonly logger = new Logger(FaceRecognitionService.name);
 
   async onModuleInit() {
-    await this.ensureModelsExist();
+    //await this.ensureModelsExist();
     await this.loadModels();
+    this.logger.log(`Loading models from: ${this.modelPath}`);
+
   }
 
   private async ensureModelsExist() {
@@ -94,23 +96,38 @@ export class FaceRecognitionService implements OnModuleInit {
   }
 
   private async loadModels() {
-    await faceapi.nets.ssdMobilenetv1.loadFromDisk(this.modelPath);
-    await faceapi.nets.faceLandmark68Net.loadFromDisk(this.modelPath);
-    await faceapi.nets.faceRecognitionNet.loadFromDisk(this.modelPath);
+    const resolvedPath = path.resolve(process.cwd(), 'models');
+
+    //const resolvedPath = path.resolve(__dirname, '..', 'models');
+    this.logger.log(`Loading models from: ${resolvedPath}`);
+  
+    await faceapi.nets.tinyFaceDetector.loadFromDisk(resolvedPath);
+    await faceapi.nets.faceLandmark68Net.loadFromDisk(resolvedPath);
+    await faceapi.nets.faceRecognitionNet.loadFromDisk(resolvedPath);
+  
     this.logger.log('Face recognition models loaded successfully.');
   }
-
+  
+  
   async detectFace(imageBuffer: Buffer) {
     try {
       const img = await canvas.loadImage(imageBuffer);
-      const detections = await faceapi.detectAllFaces(img as unknown as HTMLImageElement)
-        .withFaceLandmarks()
-        .withFaceDescriptors();
-
+  
+      const detections = await faceapi.detectAllFaces(
+        img as unknown as HTMLImageElement,
+        new faceapi.TinyFaceDetectorOptions({
+          inputSize: 416, 
+          scoreThreshold: 0.5
+        })
+      )
+      .withFaceLandmarks()
+      .withFaceDescriptors();
+  
       return detections;
     } catch (error) {
       this.logger.error('Error detecting face:', error);
       throw error;
     }
   }
+  
 }
