@@ -57,7 +57,7 @@ export class UsersController {
   @UseInterceptors(
     FileInterceptor('photo', {
       storage: diskStorage({
-        destination: './uploads', // where to save uploaded images
+        destination: './uploads', 
         filename: (req, file, cb) => {
           const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
           cb(null, uniqueName);
