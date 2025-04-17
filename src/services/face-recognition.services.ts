@@ -83,7 +83,7 @@ export class FaceRecognitionService implements OnModuleInit {
         }).on('error', (err) => {
           if (retries > 0) {
             this.logger.warn(`Download failed, retrying... (${retries} attempts left)`);
-            download(url); // Retry the download
+            download(url);
             retries--;
           } else {
             reject(err);
@@ -91,7 +91,7 @@ export class FaceRecognitionService implements OnModuleInit {
         });
       };
 
-      download(this.modelURL); // Start the download
+      download(this.modelURL); 
     });
   }
 
