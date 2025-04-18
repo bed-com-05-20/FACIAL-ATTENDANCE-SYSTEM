@@ -12,6 +12,7 @@ export class Student {
   registrationNumber: string;
   
 
-  @Column({ default: 'absent' }) // or null if not marked yet
+  @Column({ default: 'absent' }) 
   status: string;
+  lastMarkedAt: Date;
 }

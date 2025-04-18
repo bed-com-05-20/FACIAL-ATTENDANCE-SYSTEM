@@ -17,49 +17,78 @@ export class AttendanceService {
       return { message: 'Student already exists', student: existing };
     }
 
-    const student = this.studentRepo.create({ name, registrationNumber, status: 'Not Marked' });
+    const student = this.studentRepo.create({ name, registrationNumber, status: 'absent' });
     return this.studentRepo.save(student);
   }
+// marking attendance
+async markAttendance(registrationNumber: string) {
+  const student = await this.studentRepo.findOne({ where: { registrationNumber } });
 
-  //  Mark attendance
- 
-  async markAttendance(registrationNumber: string) {
-    const student = await this.studentRepo.findOne({ where: { registrationNumber } });
-  
-    if (!student) {
-      throw new NotFoundException('Student not found');
-    }
-  
-    // Get the current time
-    const currentTime = new Date();
-    const examStartTime = new Date(currentTime);
-    examStartTime.setHours(20, 0, 0, 0); 
-  
-    // Define a grace period
-    const gracePeriodEndTime = new Date(examStartTime);
-    gracePeriodEndTime.setMinutes(examStartTime.getMinutes() + 60);  // Adding minutes for grace period
-  
-    let status: string;
-  
-    // If current time is before the class starts, mark as "present"
-    if (currentTime <= examStartTime) {
-      status = 'present';
-    } 
-    // If current time is between the class start time and the grace period end, mark as "late"
-    else if (currentTime >= examStartTime && currentTime <= gracePeriodEndTime) {
-      status = 'late';
-    } 
-
-    // If current time is after the grace period end, mark as "absent"
-    else {
-      status = 'absent';
-    }
-  
-    // Update the student's status
-    student.status = status;
-    return this.studentRepo.save(student);
+  if (!student) {
+    throw new NotFoundException('Student not found');
   }
-  
+
+  const currentTime = new Date();
+
+  // Define exam start and end time
+  const examStartTime = new Date(currentTime);
+  examStartTime.setHours(9, 36, 0, 0); // Exam starts at 9:27 AM
+
+  const examEndTime = new Date(examStartTime);
+  examEndTime.setMinutes(examStartTime.getMinutes() + 1); // Exam ends 1 minute later
+
+  // Prevent multiple markings within the same exam session
+  if (student.lastMarkedAt) {
+    const lastMarked = new Date(student.lastMarkedAt);
+    const alreadyMarked =
+      lastMarked >= examStartTime && lastMarked <= examEndTime;
+
+    if (alreadyMarked) {
+      return {
+        message: 'Attendance already marked during this exam session.',
+        student: {
+          registrationNumber: student.registrationNumber,
+          name: student.name,
+          status: student.status,
+          markedAt: new Date(student.lastMarkedAt).toLocaleString('en-MW', {
+            timeZone: 'Africa/Blantyre',
+          }),
+        },
+      };
+    }
+  }
+
+  // Mark attendance for first time
+  let status: string;
+
+  if (currentTime <= examStartTime) {
+    status = 'present';
+  } else if (currentTime > examStartTime && currentTime <= examEndTime) {
+    status = 'late';
+  } else {
+    status = 'absent';
+  }
+
+  student.status = status;
+  student.lastMarkedAt = currentTime;
+
+  await this.studentRepo.save(student);
+
+  return {
+    message: `Attendance marked as ${status}`,
+    student: {
+      registrationNumber: student.registrationNumber,
+      name: student.name,
+      status: student.status,
+      markedAt: new Date(currentTime).toLocaleString('en-MW', {
+        timeZone: 'Africa/Blantyre',
+      }),
+    },
+  };
+}
+
+
+    
 
   //  Get all attendance records
   async getAttendanceRecords() {
@@ -75,4 +104,5 @@ export class AttendanceService {
     await this.studentRepo.remove(student);
     return { message: 'Student deleted successfully' };
   }
+    
 }
