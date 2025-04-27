@@ -1,7 +1,7 @@
 import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
-export class Student {
+export class Students{
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -13,6 +13,8 @@ export class Student {
   
 
   @Column({ default: 'absent' }) 
-  status: string;
-  lastMarkedAt: Date;
+ status: string;
+ 
+ @Column({ type: 'timestamp', nullable: true })
+ lastMarkedAt: Date;
 }

@@ -1,28 +1,28 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Student } from './student.entity';
+import { Students } from './students.entity';
 
 @Injectable()
 export class AttendanceService {
   constructor(
-    @InjectRepository(Student)
-    private readonly studentRepo: Repository<Student>
+    @InjectRepository(Students)
+    private readonly studentsRepo: Repository<Students>
   ) {}
 
   //  Mock enrollment for testing
   async mockEnrollStudent(name: string, registrationNumber: string) {
-    const existing = await this.studentRepo.findOne({ where: { registrationNumber } });
+    const existing = await this.studentsRepo.findOne({ where: { registrationNumber } });
     if (existing) {
-      return { message: 'Student already exists', student: existing };
+      return { message: 'Student already exists', students: existing };
     }
 
-    const student = this.studentRepo.create({ name, registrationNumber, status: 'absent' });
-    return this.studentRepo.save(student);
+    const students = this.studentsRepo.create({ name, registrationNumber, status: 'absent' });
+    return this.studentsRepo.save(students);
   }
-// marking attendance
+// Mark attendance for the first time
 async markAttendance(registrationNumber: string) {
-  const student = await this.studentRepo.findOne({ where: { registrationNumber } });
+  const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
 
   if (!student) {
     throw new NotFoundException('Student not found');
@@ -31,36 +31,34 @@ async markAttendance(registrationNumber: string) {
   const currentTime = new Date();
 
   // Define exam start and end time
-  const examStartTime = new Date(currentTime);
-  examStartTime.setHours(9, 36, 0, 0); // Exam starts at 9:27 AM
-
+  const examStartTime = new Date();
+  examStartTime.setHours(10, 10, 0, 0); 
+  
   const examEndTime = new Date(examStartTime);
-  examEndTime.setMinutes(examStartTime.getMinutes() + 1); // Exam ends 1 minute later
+  examEndTime.setMinutes(examStartTime.getMinutes() + 1); 
 
-  // Prevent multiple markings within the same exam session
+  // Prevent multiple markings within the exam session
   if (student.lastMarkedAt) {
     const lastMarked = new Date(student.lastMarkedAt);
-    const alreadyMarked =
+
+    const isAlreadyMarked =
       lastMarked >= examStartTime && lastMarked <= examEndTime;
 
-    if (alreadyMarked) {
+    if (isAlreadyMarked) {
       return {
         message: 'Attendance already marked during this exam session.',
         student: {
           registrationNumber: student.registrationNumber,
           name: student.name,
           status: student.status,
-          markedAt: new Date(student.lastMarkedAt).toLocaleString('en-MW', {
-            timeZone: 'Africa/Blantyre',
-          }),
+          markedAt: lastMarked.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
         },
       };
     }
   }
 
-  // Mark attendance for first time
+  // Mark attendance for the first time
   let status: string;
-
   if (currentTime <= examStartTime) {
     status = 'present';
   } else if (currentTime > examStartTime && currentTime <= examEndTime) {
@@ -72,7 +70,7 @@ async markAttendance(registrationNumber: string) {
   student.status = status;
   student.lastMarkedAt = currentTime;
 
-  await this.studentRepo.save(student);
+  await this.studentsRepo.save(student);
 
   return {
     message: `Attendance marked as ${status}`,
@@ -80,28 +78,28 @@ async markAttendance(registrationNumber: string) {
       registrationNumber: student.registrationNumber,
       name: student.name,
       status: student.status,
-      markedAt: new Date(currentTime).toLocaleString('en-MW', {
-        timeZone: 'Africa/Blantyre',
-      }),
+      markedAt: currentTime.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
     },
   };
 }
+
+
 
 
     
 
   //  Get all attendance records
   async getAttendanceRecords() {
-    return this.studentRepo.find();
+    return this.studentsRepo.find();
   }
 
   //  Delete a student
   async deleteStudent(registrationNumber: string) {
-    const student = await this.studentRepo.findOne({ where: { registrationNumber } });
+    const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
     if (!student) {
       throw new NotFoundException('Student not found');
     }
-    await this.studentRepo.remove(student);
+    await this.studentsRepo.remove(student);
     return { message: 'Student deleted successfully' };
   }
     
