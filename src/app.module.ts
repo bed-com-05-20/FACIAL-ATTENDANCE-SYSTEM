@@ -9,6 +9,7 @@ import { User } from './Entities/users.entity';
 import { FaceRecognitionController } from './services/face-recognition.controller';
 import { FaceRecognitionService } from './services/face-recognition.services';
 import { MulterModule } from '@nestjs/platform-express';
+import { FaceRecognitionModule } from './services/face-recognition.model';
 
 @Module({
   imports: [
@@ -24,11 +25,13 @@ import { MulterModule } from '@nestjs/platform-express';
       synchronize: false, 
     }),
     UsersModule,
+    FaceRecognitionModule,
   ],
-  controllers: [FaceRecognitionController],
-  providers: [FaceRecognitionService],
+  controllers: [],
+  providers: [],
   // controllers: [AppController, UsersController],
   // providers: [AppService, UsersService],
-  //exports: [UsersService],
+ //exports: [UsersService, FaceRecognitionModule],
 })
 export class AppModule {}
+
