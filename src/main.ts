@@ -1,7 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 // Import canvas and explicitly type Image and ImageData
 import * as canvas from 'canvas';
@@ -20,35 +19,22 @@ const { Canvas, Image: CanvasImage, ImageData: CanvasImageData } = canvas;
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-<<<<<<< HEAD
-  // Enable CORS (if needed)
+  // Enable CORS
   app.enableCors();
 
   // Swagger Configuration
   const config = new DocumentBuilder()
-    .setTitle('Facial Attendance API')
-    .setDescription('API documentation for the Facial Attendance System')
+    .setTitle('Facial Attendance API') // You can combine titles if you want
+    .setDescription('API documentation for the Facial Attendance / Face Recognition System')
     .setVersion('1.0')
+    .addTag('Face Recognition')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3000);
-=======
-  const config = new DocumentBuilder()
-    .setTitle('Face Recognition API')
-    .setDescription('API documentation for face recognition system')
-    .setVersion('1.0')
-    .addTag('Face Recognition')
-    .build();
-
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
-
+  // Start server
   await app.listen(process.env.PORT ?? 3000);
->>>>>>> origin/bed-com-21-20
 }
 
 bootstrap();
-

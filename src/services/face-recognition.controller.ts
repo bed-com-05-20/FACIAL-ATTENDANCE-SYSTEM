@@ -53,7 +53,7 @@ import { Controller, Post, UploadedFile, UseInterceptors, BadRequestException } 
 import { FileInterceptor } from '@nestjs/platform-express';
 import { FaceRecognitionService } from '../services/face-recognition.services';
 
-@Controller('face-recognition')
+@Controller('facia-recognition')
 export class FaceRecognitionController {
   constructor(private readonly faceRecognitionService: FaceRecognitionService) {}
 
