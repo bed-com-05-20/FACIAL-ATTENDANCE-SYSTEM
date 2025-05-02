@@ -7,9 +7,9 @@ import * as unzipper from 'unzipper';
 import * as canvas from 'canvas';
 
 faceapi.env.monkeyPatch({
-  Canvas: canvas.Canvas as any,  // Cast to `any` to avoid type conflicts
+  Canvas: canvas.Canvas as any,
   Image: canvas.Image as any,
-  ImageData: canvas.ImageData as any
+  ImageData: canvas.ImageData as any,
 });
 
 @Injectable()
@@ -18,116 +18,139 @@ export class FaceRecognitionService implements OnModuleInit {
   private readonly modelURL = 'https://github.com/justadudewhohacks/face-api.js-models/archive/refs/heads/master.zip';
   private readonly logger = new Logger(FaceRecognitionService.name);
 
+  private descriptors: {
+    descriptor: Float32Array;
+    name: string;
+    userId: string | null;
+  }[] = [];
+
   async onModuleInit() {
-    //await this.ensureModelsExist();
     await this.loadModels();
-    this.logger.log(`Loading models from: ${this.modelPath}`);
-
+    this.logger.log(`Models loaded from: ${this.modelPath}`);
   }
 
-  private async ensureModelsExist() {
-    if (!fs.existsSync(this.modelPath)) {
-      this.logger.log('Models not found. Downloading...');
-      await this.downloadAndExtractModels();
-    }
-  }
-
-  private async downloadAndExtractModels(retries: number = 3) {
+  private async downloadAndExtractModels(retries = 3) {
     return new Promise<void>((resolve, reject) => {
       const zipPath = path.join(this.modelPath, 'models.zip');
       fs.mkdirSync(this.modelPath, { recursive: true });
 
       const file = fs.createWriteStream(zipPath);
-      let fileSize = 0; // Initialize file size variable
 
       const download = (url: string) => {
         https.get(url, (response) => {
-          if (response.statusCode === 302) {
-            const redirectUrl = response.headers.location;
-            if (redirectUrl) {
-              this.logger.log(`Redirecting to: ${redirectUrl}`);
-              return download(redirectUrl); // Follow the redirect
-            }
+          if (response.statusCode === 302 && response.headers.location) {
+            return download(response.headers.location);
           }
 
           if (response.statusCode !== 200) {
-            this.logger.error(`Failed to download model: ${response.statusCode}`);
             if (retries > 0) {
-              this.logger.log(`Retrying download... (${3 - retries + 1})`);
               return this.downloadAndExtractModels(retries - 1);
-            } else {
-              return reject(new Error('Failed to download model after multiple attempts.'));
             }
+            return reject(new Error('Failed to download model.'));
           }
 
           response.pipe(file);
-          file.on('finish', async () => {
+          file.on('finish', () => {
             file.close();
-            this.logger.log('Download complete. Extracting...');
             fs.createReadStream(zipPath)
               .pipe(unzipper.Extract({ path: this.modelPath }))
-              .on('close', async () => {
-                // Check if the file size is greater than 0 before extraction
-                fileSize = fs.statSync(zipPath).size;
-                if (fileSize === 0) {
-                  this.logger.error('Downloaded file is empty. Extraction aborted.');
-                  return reject(new Error('Downloaded file is empty.'));
-                }
-
+              .on('close', () => {
                 fs.unlinkSync(zipPath);
-                this.logger.log('Model extraction complete.');
                 resolve();
               })
               .on('error', reject);
           });
-        }).on('error', (err) => {
-          if (retries > 0) {
-            this.logger.warn(`Download failed, retrying... (${retries} attempts left)`);
-            download(url);
-            retries--;
-          } else {
-            reject(err);
-          }
-        });
+        }).on('error', reject);
       };
 
-      download(this.modelURL); 
+      download(this.modelURL);
     });
   }
 
   private async loadModels() {
     const resolvedPath = path.resolve(process.cwd(), 'models');
 
-    //const resolvedPath = path.resolve(__dirname, '..', 'models');
-    this.logger.log(`Loading models from: ${resolvedPath}`);
-  
     await faceapi.nets.tinyFaceDetector.loadFromDisk(resolvedPath);
     await faceapi.nets.faceLandmark68Net.loadFromDisk(resolvedPath);
     await faceapi.nets.faceRecognitionNet.loadFromDisk(resolvedPath);
-  
-    this.logger.log('Face recognition models loaded successfully.');
+
+    this.logger.log('Face recognition models loaded.');
   }
-  
-  
-  async detectFace(imageBuffer: Buffer) {
+
+  async detectFace(imagePath: string) {
     try {
-      const img = await canvas.loadImage(imageBuffer);
-  
-      const detections = await faceapi.detectAllFaces(
-        img as unknown as HTMLImageElement,
-        new faceapi.TinyFaceDetectorOptions({
-          inputSize: 416, 
-          scoreThreshold: 0.5
-        })
-      )
-      .withFaceLandmarks()
-      .withFaceDescriptors();
-  
-      return detections;
+      const img = await canvas.loadImage(imagePath);
+
+      const detections = await faceapi
+        .detectAllFaces(img as unknown as faceapi.TNetInput, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 }))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      fs.unlinkSync(imagePath);
+
+      return detections.map(detection => ({
+        detection,
+        descriptor: detection.descriptor
+      }));
     } catch (error) {
       this.logger.error('Error detecting face:', error);
       throw error;
     }
+  }
+
+  async saveDescriptor(data: {
+    descriptor: Float32Array;
+    name: string;
+    userId: string | null;
+  }) {
+    this.descriptors.push(data);
+    this.logger.log(`Descriptor saved for: ${data.name || 'Unnamed User'}`);
+  }
+
+  async recognizeUser(detectedFaces: { descriptor: Float32Array }[]) {
+    const threshold = 0.5; // Euclidean distance threshold
+    const results: {
+      match: boolean;
+      name: string;
+      userId: string | null;
+      distance: number;
+    }[] = [];
+  
+    for (const { descriptor } of detectedFaces) {
+      let bestMatch: {
+        descriptor: Float32Array;
+        name: string;
+        userId: string | null;
+      } | null = null;
+  
+      let bestDistance = Number.MAX_VALUE;
+  
+      for (const stored of this.descriptors) {
+        const distance = faceapi.euclideanDistance(descriptor, stored.descriptor);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          bestMatch = stored;
+        }
+      }
+  
+      results.push(
+        bestMatch && bestDistance < threshold
+          ? {
+              match: true,
+              name: bestMatch.name,
+              userId: bestMatch.userId,
+              distance: bestDistance
+            }
+          : {
+              match: false,
+              name: 'new user',
+              userId: null,
+              distance: bestDistance
+            }
+      );
+    }
+  
+    return results;
   }
   
 }
