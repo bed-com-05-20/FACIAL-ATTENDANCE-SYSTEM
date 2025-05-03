@@ -1,17 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { AttendanceModule } from './attendance/attendance.module';
-
-// Additional imports from other branch
-
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { UsersController } from './users/users.controller';
 import { UsersService } from './users/users.service';
 import { UsersModule } from './users/users.module';
 import { User } from './Entities/users.entity';
-import { FaceRecognitionController } from './services/face-recognition.controller';
-import { FaceRecognitionService } from './services/face-recognition.services';
 import { MulterModule } from '@nestjs/platform-express';
 import { FaceRecognitionModule } from './services/face-recognition.model';
+import { FaceEntity } from './Entities/face.entity';
 
 @Module({
   imports: [
@@ -23,12 +19,11 @@ import { FaceRecognitionModule } from './services/face-recognition.model';
       type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'postgres',
-      password: 'taya6000', 
-      database: 'attendance',
+      username: 'postgres', 
+      password: 'admin', 
+      database: 'mydb', 
       entities: [User],
       synchronize: false, 
-      autoLoadEntities: true, 
     }),
     
     
