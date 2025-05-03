@@ -5,6 +5,9 @@ import * as path from 'path';
 import * as https from 'https';
 import * as unzipper from 'unzipper';
 import * as canvas from 'canvas';
+import { InjectRepository } from '@nestjs/typeorm';
+import { FaceEntity } from 'src/Entities/face.entity';
+import { Repository } from 'typeorm';
 
 faceapi.env.monkeyPatch({
   Canvas: canvas.Canvas as any,
@@ -12,20 +15,29 @@ faceapi.env.monkeyPatch({
   ImageData: canvas.ImageData as any,
 });
 
+interface FaceDescriptorData {
+  descriptor: Float32Array;
+  name: string;
+  userId: string | null;
+}
+
 @Injectable()
 export class FaceRecognitionService implements OnModuleInit {
+  constructor(
+    @InjectRepository(FaceEntity)
+    private readonly faceRepository: Repository<FaceEntity>,
+  ) {}
+
   private readonly modelPath = path.join(__dirname, '..', 'models');
-  private readonly modelURL = 'https://github.com/justadudewhohacks/face-api.js-models/archive/refs/heads/master.zip';
+  private readonly modelURL =
+    'https://github.com/justadudewhohacks/face-api.js-models/archive/refs/heads/master.zip';
   private readonly logger = new Logger(FaceRecognitionService.name);
 
-  private descriptors: {
-    descriptor: Float32Array;
-    name: string;
-    userId: string | null;
-  }[] = [];
+  private descriptors: FaceDescriptorData[] = [];
 
   async onModuleInit() {
     await this.loadModels();
+    await this.loadDescriptorsFromDatabase();
     this.logger.log(`Models loaded from: ${this.modelPath}`);
   }
 
@@ -82,15 +94,21 @@ export class FaceRecognitionService implements OnModuleInit {
       const img = await canvas.loadImage(imagePath);
 
       const detections = await faceapi
-        .detectAllFaces(img as unknown as faceapi.TNetInput, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 }))
+        .detectAllFaces(
+          img as unknown as faceapi.TNetInput,
+          new faceapi.TinyFaceDetectorOptions({
+            inputSize: 416,
+            scoreThreshold: 0.5,
+          }),
+        )
         .withFaceLandmarks()
         .withFaceDescriptors();
 
       fs.unlinkSync(imagePath);
 
-      return detections.map(detection => ({
+      return detections.map((detection) => ({
         detection,
-        descriptor: detection.descriptor
+        descriptor: detection.descriptor,
       }));
     } catch (error) {
       this.logger.error('Error detecting face:', error);
@@ -98,33 +116,37 @@ export class FaceRecognitionService implements OnModuleInit {
     }
   }
 
-  async saveDescriptor(data: {
-    descriptor: Float32Array;
-    name: string;
-    userId: string | null;
-  }) {
-    this.descriptors.push(data);
-    this.logger.log(`Descriptor saved for: ${data.name || 'Unnamed User'}`);
+  async saveDescriptor(data: FaceDescriptorData) {
+    const descriptorArray = Array.from(data.descriptor);
+
+    const entity = this.faceRepository.create({
+      descriptor: JSON.stringify(descriptorArray),
+      name: data.name,
+      userId: data.userId ?? undefined,
+    });
+
+    await this.faceRepository.save(entity);
+    this.logger.log(`Descriptor saved to DB: ${data.name || 'Unnamed User'}`);
+  }
+
+  async loadDescriptorsFromDatabase() {
+    const all = await this.faceRepository.find();
+    this.descriptors = all.map((entry) => ({
+      descriptor: new Float32Array(JSON.parse(entry.descriptor)),
+      name: entry.name || 'Unnamed',
+      userId: entry.userId ?? null,
+    }));
+
+    this.logger.log(`Loaded ${this.descriptors.length} descriptors from DB`);
   }
 
   async recognizeUser(detectedFaces: { descriptor: Float32Array }[]) {
-    const threshold = 0.5; // Euclidean distance threshold
-    const results: {
-      match: boolean;
-      name: string;
-      userId: string | null;
-      distance: number;
-    }[] = [];
-  
-    for (const { descriptor } of detectedFaces) {
-      let bestMatch: {
-        descriptor: Float32Array;
-        name: string;
-        userId: string | null;
-      } | null = null;
-  
+    const threshold = 0.5;
+
+    return detectedFaces.map(({ descriptor }) => {
+      let bestMatch: FaceDescriptorData | null = null;
       let bestDistance = Number.MAX_VALUE;
-  
+
       for (const stored of this.descriptors) {
         const distance = faceapi.euclideanDistance(descriptor, stored.descriptor);
         if (distance < bestDistance) {
@@ -132,25 +154,30 @@ export class FaceRecognitionService implements OnModuleInit {
           bestMatch = stored;
         }
       }
-  
-      results.push(
-        bestMatch && bestDistance < threshold
-          ? {
-              match: true,
-              name: bestMatch.name,
-              userId: bestMatch.userId,
-              distance: bestDistance
-            }
-          : {
-              match: false,
-              name: 'new user',
-              userId: null,
-              distance: bestDistance
-            }
-      );
-    }
-  
-    return results;
+
+      if (bestMatch && bestDistance < threshold) {
+        return {
+          match: true,
+          name: bestMatch.name,
+          userId: bestMatch.userId,
+          distance: bestDistance,
+        };
+      } else {
+        return {
+          match: false,
+          name: 'new user',
+          userId: null,
+          distance: bestDistance,
+        };
+      }
+    });
   }
-  
+
+  async getAllDescriptors() {
+    const all = await this.faceRepository.find();
+    return all.map((face) => ({
+      ...face,
+      descriptor: JSON.parse(face.descriptor),
+    }));
+  }
 }
