@@ -10,7 +10,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { FaceRecognitionService } from './face-recognition.services';
 
-@Controller('facia-recognition')
+@Controller('face-recognition')
 export class FaceRecognitionController {
   constructor(private readonly faceService: FaceRecognitionService) {}
 
