@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger, NotFoundException } from '@nestjs/common';
 import * as faceapi from 'face-api.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -141,7 +141,7 @@ export class FaceRecognitionService implements OnModuleInit {
   }
 
   async recognizeUser(detectedFaces: { descriptor: Float32Array }[]) {
-    const threshold = 0.5;
+    const threshold = 0.6;
 
     return detectedFaces.map(({ descriptor }) => {
       let bestMatch: FaceDescriptorData | null = null;
@@ -150,7 +150,7 @@ export class FaceRecognitionService implements OnModuleInit {
       for (const stored of this.descriptors) {
         const distance = faceapi.euclideanDistance(descriptor, stored.descriptor);
         if (distance < bestDistance) {
-          bestDistance = distance;
+          bestDistance = distance; 
           bestMatch = stored;
         }
       }
@@ -180,4 +180,16 @@ export class FaceRecognitionService implements OnModuleInit {
       descriptor: JSON.parse(face.descriptor),
     }));
   }
+  // face-recognition.services.ts
+async deleteAllDescriptors(): Promise<void> {
+  await this.faceRepository.clear(); // deletes all rows
+}
+
+async deleteDescriptorById(id: string): Promise<void> {
+  const result = await this.faceRepository.delete(id);
+  if (result.affected === 0) {
+    throw new NotFoundException(`Descriptor with ID ${id} not found`);
+  }
+}
+
 }
