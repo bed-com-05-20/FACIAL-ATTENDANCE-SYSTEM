@@ -5,6 +5,7 @@ import { User } from './Entities/users.entity';
 import { MulterModule } from '@nestjs/platform-express';
 import { FaceRecognitionModule } from './services/face-recognition.model';
 import { FaceEntity } from './Entities/face.entity';
+import { CameraController } from './services/camera.controller';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { FaceEntity } from './Entities/face.entity';
     UsersModule,
     FaceRecognitionModule,
   ],
-  controllers: [],
+  controllers: [CameraController],
   providers: [],
   // controllers: [AppController, UsersController],
   // providers: [AppService, UsersService],
