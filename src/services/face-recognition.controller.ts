@@ -6,6 +6,9 @@ import {
   InternalServerErrorException,
   Get,
   Logger,
+  Delete,
+  NotFoundException,
+  Param,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
@@ -81,4 +84,27 @@ export class FaceRecognitionController {
       throw new InternalServerErrorException('Failed to fetch data.');
     }
   }
+
+  @Delete('delete-all')
+  async deleteAllDescriptors() {
+    try {
+      await this.faceService.deleteAllDescriptors();
+      return { message: 'All descriptors deleted successfully' };
+    } catch (err) {
+      throw new InternalServerErrorException('Failed to delete all descriptors');
+    }
+  }
+  
+  @Delete(':id')
+  async deleteDescriptorById(@Param('id') id: string) {
+    try {
+      await this.faceService.deleteDescriptorById(id);
+      return { message: `Descriptor with ID ${id} deleted successfully` };
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        throw err;
+      }
+      throw new InternalServerErrorException('Failed to delete descriptor');
+        }    }
+
 }
