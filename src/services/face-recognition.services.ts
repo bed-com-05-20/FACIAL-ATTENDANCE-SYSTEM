@@ -1,4 +1,5 @@
-import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+// Updated Service: face-recognition.services.ts
+import { Injectable, OnModuleInit, Logger, BadRequestException } from '@nestjs/common';
 import * as faceapi from 'face-api.js';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -24,7 +25,7 @@ type RecognitionResult =
       match: true;
       registrationNumber: string;
       distance: number;
-      attendance: any; // Adjust this type based on your AttendanceService return type
+      attendance: any;
     }
   | {
       match: true;
@@ -52,7 +53,7 @@ export class FaceRecognitionService implements OnModuleInit {
   async onModuleInit() {
     await this.loadModels();
     await this.loadDescriptorsFromDatabase();
-    this.logger.log(`Models loaded and descriptors initialized.`);
+    this.logger.log('Models loaded and descriptors initialized.');
   }
 
   private async loadModels() {
@@ -94,6 +95,13 @@ export class FaceRecognitionService implements OnModuleInit {
     }
   }
 
+  async ensureUniqueRegistration(registrationNumber: string) {
+    const existing = await this.faceRepository.findOne({ where: { registrationNumber } });
+    if (existing) {
+      throw new BadRequestException(`Registration number ${registrationNumber} already exists.`);
+    }
+  }
+
   async saveDescriptor(data: FaceDescriptorData) {
     const descriptorArray = Array.from(data.descriptor);
     if (descriptorArray.length !== 128) {
@@ -109,23 +117,18 @@ export class FaceRecognitionService implements OnModuleInit {
     await this.faceRepository.save(entity);
     this.logger.log(`Descriptor saved for registrationNumber: ${data.registrationNumber}`);
 
-    await this.loadDescriptorsFromDatabase(); // Refresh in-memory cache
+    await this.loadDescriptorsFromDatabase();
   }
 
   async loadDescriptorsFromDatabase() {
     const all = await this.faceRepository.find();
-
     this.descriptors = all.map((entry) => {
       const array = JSON.parse(entry.descriptor);
-      if (array.length !== 128) {
-        this.logger.warn(`Descriptor with reg no ${entry.registrationNumber} has invalid length.`);
-      }
       return {
         descriptor: new Float32Array(array),
         registrationNumber: entry.registrationNumber,
       };
     });
-
     this.logger.log(`Loaded ${this.descriptors.length} descriptors from DB`);
   }
 
@@ -135,32 +138,23 @@ export class FaceRecognitionService implements OnModuleInit {
     const threshold = 0.6;
     const results: RecognitionResult[] = [];
     const recognizedUsers = new Set<string>();
-  
+
     for (let i = 0; i < detectedFaces.length; i++) {
       const { descriptor } = detectedFaces[i];
       let bestMatch: FaceDescriptorData | null = null;
       let bestDistance = Number.MAX_VALUE;
-  
+
       for (const stored of this.descriptors) {
         const distance = faceapi.euclideanDistance(descriptor, stored.descriptor);
-        this.logger.debug(
-          `Face ${i}: Distance to ${stored.registrationNumber} = ${distance.toFixed(4)}`
-        );
-  
         if (distance < bestDistance) {
           bestDistance = distance;
           bestMatch = stored;
         }
       }
-  
+
       if (bestMatch && bestDistance < threshold) {
         const isDuplicate = recognizedUsers.has(bestMatch.registrationNumber);
-  
         if (!isDuplicate) {
-          this.logger.log(
-            `Face ${i}: Match found for ${bestMatch.registrationNumber} (distance ${bestDistance.toFixed(4)})`
-          );
-  
           try {
             const attendance = await this.attendanceService.markAttendance(bestMatch.registrationNumber);
             recognizedUsers.add(bestMatch.registrationNumber);
@@ -171,9 +165,6 @@ export class FaceRecognitionService implements OnModuleInit {
               attendance,
             });
           } catch (error) {
-            this.logger.error(
-              `Face ${i}: Failed to mark attendance for ${bestMatch.registrationNumber}: ${error.message}`
-            );
             results.push({
               match: true,
               registrationNumber: bestMatch.registrationNumber,
@@ -182,11 +173,6 @@ export class FaceRecognitionService implements OnModuleInit {
             });
           }
         } else {
-          this.logger.warn(
-            `Face ${i}: Duplicate match for ${bestMatch.registrationNumber}, attendance already marked.`
-          );
-  
-          // Still return match info even if attendance is skipped
           results.push({
             match: true,
             registrationNumber: bestMatch.registrationNumber,
@@ -195,9 +181,6 @@ export class FaceRecognitionService implements OnModuleInit {
           });
         }
       } else {
-        this.logger.warn(
-          `Face ${i}: No match found. Closest distance: ${bestDistance.toFixed(4)}`
-        );
         results.push({
           match: false,
           registrationNumber: null,
@@ -205,11 +188,9 @@ export class FaceRecognitionService implements OnModuleInit {
         });
       }
     }
-  
+
     return results;
   }
-  
-  
 
   async getAllDescriptors() {
     const all = await this.faceRepository.find();
