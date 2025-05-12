@@ -1,47 +1,30 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UsersController } from './users/users.controller';
-import { UsersService } from './users/users.service';
-import { UsersModule } from './users/users.module';
-import { User } from './Entities/users.entity';
 import { MulterModule } from '@nestjs/platform-express';
-import { FaceRecognitionModule } from './services/face-recognition.model';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsersModule } from './users/users.module';
+import { AttendanceModule } from './attendance/attendance.module';
+import { FaceRecognitionModule } from './services/face-recognition.model'; // Make sure this is correctly named and points to a `.module.ts` file
+
+import { User } from './Entities/users.entity';
+import { Students } from './attendance/students.entity';
 import { FaceEntity } from './Entities/face.entity';
 
 @Module({
   imports: [
-    
     MulterModule.register({ dest: './uploads' }),
-    
-    // database connection
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'postgres', 
-      password: 'admin', 
-      database: 'mydb', 
-      entities: [User],
-      synchronize: false, 
+      username: 'postgres',
+      password: 'taya6000',
+      database: 'attendance',
+      entities: [User,Students,FaceEntity],
+      synchronize: false,
     }),
-    
-    
-    AttendanceModule,
     UsersModule,
-    FaceRecognitionModule,
-  ],
-  
-  controllers: [
-    
-    UsersController,
-    FaceRecognitionController, // added this
-  ],
-  
-  providers: [
-    
-    UsersService,
-    FaceRecognitionService,
+    AttendanceModule,
+    FaceRecognitionModule, // This module should handle the controller/service
   ],
 })
 export class AppModule {}

@@ -1,20 +1,25 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+// students.entity.ts
+import { FaceEntity } from 'src/Entities/face.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
 
-@Entity()
-export class Students{
+@Entity('students')
+export class Students {
   @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   name: string;
 
-  @Column({ nullable: true })
+  @Column()
   registrationNumber: string;
-  
 
-  @Column({ default: 'absent' }) 
- status: string;
- 
- @Column({ type: 'timestamp', nullable: true })
- lastMarkedAt: Date;
+  @Column()
+  status: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  lastMarkedAt: Date;
+
+  @OneToOne(() => FaceEntity, faceEntity => faceEntity.student, { nullable: true })
+  @JoinColumn()
+  faceEntity: FaceEntity;
 }

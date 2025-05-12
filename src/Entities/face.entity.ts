@@ -1,17 +1,18 @@
 // face.entity.ts
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Students } from 'src/attendance/students.entity';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from 'typeorm';
 
-@Entity('faces')
+@Entity('FaceEntity')
 export class FaceEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-  @Column({ type: 'text' })
+  @Column()
   descriptor: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  name: string | null;
+  @Column()
+  registrationNumber: string;
 
-  @Column({ type: 'varchar', nullable: true })
-  userId: string | null;
+  @OneToOne(() => Students, student => student.faceEntity)
+  student: Students;
 }

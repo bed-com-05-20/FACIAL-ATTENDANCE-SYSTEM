@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Students } from './students.entity';
 
+
 @Injectable()
 export class AttendanceService {
   constructor(
@@ -32,7 +33,7 @@ async markAttendance(registrationNumber: string) {
 
   // Define exam start and end time
   const examStartTime = new Date();
-  examStartTime.setHours(10, 10 , 0, 0); 
+  examStartTime.setHours(20, 21 , 0, 0); 
   
   const examEndTime = new Date(examStartTime);
   examEndTime.setMinutes(examStartTime.getMinutes() + 1); 

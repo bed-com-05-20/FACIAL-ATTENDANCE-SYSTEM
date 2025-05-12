@@ -5,7 +5,9 @@ import {
   UseInterceptors,
   InternalServerErrorException,
   Get,
+  Delete,
   Logger,
+  Body,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
@@ -20,9 +22,16 @@ export class FaceRecognitionController {
 
   @Post('detect')
   @UseInterceptors(FileInterceptor('file'))
-  async detectFace(@UploadedFile() file: Express.Multer.File) {
+  async detectFace(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('registrationNumber') registrationNumber: string,
+  ) {
     if (!file) {
       throw new InternalServerErrorException('No file uploaded.');
+    }
+
+    if (!registrationNumber) {
+      throw new InternalServerErrorException('Registration number is required.');
     }
 
     const uploadDir = path.join(__dirname, '..', '..', 'uploads');
@@ -37,8 +46,7 @@ export class FaceRecognitionController {
       const detections = await this.faceService.detectFace(tempPath);
       const recognitionResults: {
         match: boolean;
-        name: string;
-        userId: string | null;
+        registrationNumber: string | null;
         distance: number;
       }[] = [];
 
@@ -49,12 +57,11 @@ export class FaceRecognitionController {
         if (!match.match) {
           await this.faceService.saveDescriptor({
             descriptor,
-            name: 'Unnamed User',
-            userId: null,
+            registrationNumber,
           });
-          this.logger.log('New face saved to database');
+          this.logger.log(`New face saved for registration number: ${registrationNumber}`);
         } else {
-          this.logger.log(`Face recognized: ${match.name}`);
+          this.logger.log(`Face recognized with registration number: ${match.registrationNumber}`);
         }
 
         recognitionResults.push(match);
@@ -79,6 +86,18 @@ export class FaceRecognitionController {
     } catch (error) {
       this.logger.error('Failed to fetch descriptors', error.stack || error.message);
       throw new InternalServerErrorException('Failed to fetch data.');
+    }
+  }
+
+  @Delete('all')
+  async deleteAllDescriptors() {
+    try {
+      await this.faceService.deleteAllDescriptors();
+      this.logger.log('All face descriptors deleted from DB');
+      return { message: 'All face descriptors deleted.' };
+    } catch (error) {
+      this.logger.error('Failed to delete descriptors', error.stack || error.message);
+      throw new InternalServerErrorException('Failed to delete descriptors.');
     }
   }
 }
