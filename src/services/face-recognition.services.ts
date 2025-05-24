@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FaceEntity } from 'src/Entities/face.entity';
 import { AttendanceService } from 'src/attendance/attendance.service';
+import { FaceGateway } from 'src/FaceGateway/face_gateway';
 
 faceapi.env.monkeyPatch({
   Canvas: canvas.Canvas as any,
@@ -48,6 +49,7 @@ export class FaceRecognitionService implements OnModuleInit {
     @InjectRepository(FaceEntity)
     private readonly faceRepository: Repository<FaceEntity>,
     private readonly attendanceService: AttendanceService,
+    private readonly faceGateway: FaceGateway, // Injected gateway
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -87,6 +89,10 @@ export class FaceRecognitionService implements OnModuleInit {
         this.logger.warn('No faces detected.');
       } else {
         this.logger.log(`Detected ${detections.length} face(s).`);
+        this.faceGateway.emitEvent('face-detected', {
+          count: detections.length,
+          timestamp: new Date().toISOString(),
+        }); // Emit event
       }
 
       return detections.map((d) => ({

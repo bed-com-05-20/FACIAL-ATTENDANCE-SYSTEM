@@ -8,8 +8,9 @@ import { FaceRecognitionModule } from './services/face-recognition.model'; // Ma
 import { User } from './Entities/users.entity';
 import { Students } from './attendance/students.entity';
 import { FaceEntity } from './Entities/face.entity';
-import { CameraController } from './services/camera.controller';
 import { CameraModule } from './camera/camera.module';
+import { FaceGateway } from './FaceGateway/face_gateway';
+import { GatewayModule } from './face-gateway/face-gateway.module';
 
 @Module({
   imports: [
@@ -27,10 +28,12 @@ import { CameraModule } from './camera/camera.module';
     UsersModule,
     AttendanceModule,
     FaceRecognitionModule,
-    CameraModule, // This module should handle the controller/service
+    CameraModule,
+    GatewayModule, // This module should handle the controller/service
   ],
   controllers: [],
-  providers: [],
+  providers: [FaceGateway],
+  
   
   // controllers: [AppController, UsersController],
   // providers: [AppService, UsersService],

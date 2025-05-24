@@ -12,7 +12,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
 import * as path from 'path';
-import { CameraService } from '../camera/camera.service'; // ✅ import camera service
+import { CameraService } from '../camera/camera.service'; // import camera service
 import { FaceRecognitionService, RecognitionResult } from './face-recognition.services';
 
 @Controller('face')
@@ -21,7 +21,7 @@ export class FaceRecognitionController {
 
   constructor(
     private readonly faceService: FaceRecognitionService,
-    private readonly cameraService: CameraService, // ✅ inject camera service
+    private readonly cameraService: CameraService, //  inject camera service
   ) {}
 
   @Post('detect')

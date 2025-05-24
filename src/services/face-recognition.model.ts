@@ -5,12 +5,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { FaceEntity } from 'src/Entities/face.entity';
 import { AttendanceModule } from 'src/attendance/attendance.module';
 import { CameraModule } from 'src/camera/camera.module';
+import { GatewayModule } from 'src/face-gateway/face-gateway.module';
+
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([FaceEntity]),
     AttendanceModule,
-     CameraModule
+     CameraModule,
+    GatewayModule
   ],
 
   providers: [FaceRecognitionService],
