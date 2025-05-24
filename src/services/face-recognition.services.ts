@@ -1,4 +1,4 @@
-// Updated Service: face-recognition.services.ts
+// src/services/face-recognition.service.ts
 import { Injectable, OnModuleInit, Logger, BadRequestException } from '@nestjs/common';
 import * as faceapi from 'face-api.js';
 import * as fs from 'fs';
@@ -15,12 +15,12 @@ faceapi.env.monkeyPatch({
   ImageData: canvas.ImageData as any,
 });
 
-interface FaceDescriptorData {
+export interface FaceDescriptorData {
   descriptor: Float32Array;
   registrationNumber: string;
 }
 
-type RecognitionResult =
+export type RecognitionResult =
   | {
       match: true;
       registrationNumber: string;
@@ -50,13 +50,13 @@ export class FaceRecognitionService implements OnModuleInit {
     private readonly attendanceService: AttendanceService,
   ) {}
 
-  async onModuleInit() {
+  async onModuleInit(): Promise<void> {
     await this.loadModels();
     await this.loadDescriptorsFromDatabase();
     this.logger.log('Models loaded and descriptors initialized.');
   }
 
-  private async loadModels() {
+  private async loadModels(): Promise<void> {
     const modelPath = path.resolve(process.cwd(), 'models');
     await faceapi.nets.tinyFaceDetector.loadFromDisk(modelPath);
     await faceapi.nets.faceLandmark68Net.loadFromDisk(modelPath);
@@ -64,9 +64,17 @@ export class FaceRecognitionService implements OnModuleInit {
     this.logger.log(`Face API models loaded from: ${modelPath}`);
   }
 
-  async detectFace(imagePath: string) {
+  async detectFace(imagePath: string): Promise<{ descriptor: Float32Array }[]> {
+    let img;
     try {
-      const img = await canvas.loadImage(imagePath);
+      this.logger.log(`Loading image from path: ${imagePath}`);
+      img = await canvas.loadImage(imagePath);
+    } catch (error) {
+      this.logger.error(`Failed to load image: ${imagePath}`);
+      throw new Error(`Cannot load image from path: ${imagePath}`);
+    }
+
+    try {
       const detections = await faceapi
         .detectAllFaces(
           img as unknown as faceapi.TNetInput,
@@ -85,7 +93,7 @@ export class FaceRecognitionService implements OnModuleInit {
         descriptor: d.descriptor,
       }));
     } catch (error) {
-      this.logger.error('Error detecting face:', error.message);
+      this.logger.error('Error during face detection:', error.message);
       throw error;
     } finally {
       if (fs.existsSync(imagePath)) {
@@ -95,14 +103,14 @@ export class FaceRecognitionService implements OnModuleInit {
     }
   }
 
-  async ensureUniqueRegistration(registrationNumber: string) {
+  async ensureUniqueRegistration(registrationNumber: string): Promise<void> {
     const existing = await this.faceRepository.findOne({ where: { registrationNumber } });
     if (existing) {
       throw new BadRequestException(`Registration number ${registrationNumber} already exists.`);
     }
   }
 
-  async saveDescriptor(data: FaceDescriptorData) {
+  async saveDescriptor(data: FaceDescriptorData): Promise<void> {
     const descriptorArray = Array.from(data.descriptor);
     if (descriptorArray.length !== 128) {
       this.logger.error(`Invalid descriptor length: ${descriptorArray.length}`);
@@ -116,11 +124,10 @@ export class FaceRecognitionService implements OnModuleInit {
 
     await this.faceRepository.save(entity);
     this.logger.log(`Descriptor saved for registrationNumber: ${data.registrationNumber}`);
-
-    await this.loadDescriptorsFromDatabase();
+    await this.loadDescriptorsFromDatabase(); // Refresh cache
   }
 
-  async loadDescriptorsFromDatabase() {
+  async loadDescriptorsFromDatabase(): Promise<void> {
     const all = await this.faceRepository.find();
     this.descriptors = all.map((entry) => {
       const array = JSON.parse(entry.descriptor);
@@ -132,15 +139,12 @@ export class FaceRecognitionService implements OnModuleInit {
     this.logger.log(`Loaded ${this.descriptors.length} descriptors from DB`);
   }
 
-  async recognizeUser(
-    detectedFaces: { descriptor: Float32Array }[]
-  ): Promise<RecognitionResult[]> {
-    const threshold = 0.6;
+  async recognizeUser(detectedFaces: { descriptor: Float32Array }[]): Promise<RecognitionResult[]> {
+    const threshold = 0.5;
     const results: RecognitionResult[] = [];
     const recognizedUsers = new Set<string>();
 
-    for (let i = 0; i < detectedFaces.length; i++) {
-      const { descriptor } = detectedFaces[i];
+    for (const { descriptor } of detectedFaces) {
       let bestMatch: FaceDescriptorData | null = null;
       let bestDistance = Number.MAX_VALUE;
 
@@ -153,8 +157,7 @@ export class FaceRecognitionService implements OnModuleInit {
       }
 
       if (bestMatch && bestDistance < threshold) {
-        const isDuplicate = recognizedUsers.has(bestMatch.registrationNumber);
-        if (!isDuplicate) {
+        if (!recognizedUsers.has(bestMatch.registrationNumber)) {
           try {
             const attendance = await this.attendanceService.markAttendance(bestMatch.registrationNumber);
             recognizedUsers.add(bestMatch.registrationNumber);
@@ -192,7 +195,7 @@ export class FaceRecognitionService implements OnModuleInit {
     return results;
   }
 
-  async getAllDescriptors() {
+  async getAllDescriptors(): Promise<any[]> {
     const all = await this.faceRepository.find();
     return all.map((face) => ({
       ...face,
