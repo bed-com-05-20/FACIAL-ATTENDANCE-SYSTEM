@@ -23,8 +23,8 @@ import { GatewayModule } from './face-gateway/face-gateway.module';
     //   password: 'admin',
     //  // database: 'attendance',
     //   database: 'mydb',
-     type: 'postgres',
-     url: 'postgres://yrfsvjec:2nJPN38MBU1fDq-DAcPKvk-HHAp8AYZY@lucky.db.elephantsql.com/yrfsvjec',
+    type: 'postgres',
+    url: 'postgres://yrfsvjec:2nJPN38MBU1fDq-DAcPKvk-HHAp8AYZY@lucky.db.elephantsql.com/yrfsvjec',
     
       entities: [User,Students,FaceEntity],
       synchronize: false,
