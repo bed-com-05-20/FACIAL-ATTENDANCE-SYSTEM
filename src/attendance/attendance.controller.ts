@@ -1,7 +1,8 @@
 import { Controller, Post, Body, Get, Delete, Param } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
-import { MarkAttendanceDto } from './dto/markattendance_dto';
-import { MockEnrollDto } from './dto/mockenroll_dto';
+import { MockEnrollDto } from 'src/dto/mockenroll_dto';
+import { MarkAttendanceDto } from 'src/dto/markattendance_dto';
+
 
 @Controller('attendance')
 export class AttendanceController {
