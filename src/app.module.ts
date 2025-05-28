@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './users/users.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { FaceRecognitionModule } from './services/face-recognition.model'; // Make sure this is correctly named and points to a `.module.ts` file
 
-import { User } from './Entities/users.entity';
 import { Students } from './attendance/students.entity';
 import { FaceEntity } from './Entities/face.entity';
 import { CameraModule } from './camera/camera.module';
@@ -28,10 +26,9 @@ import { GatewayModule } from './face-gateway/face-gateway.module';
       rejectUnauthorized: false,
     },
   },
-      entities: [User,Students,FaceEntity],
+      entities: [Students,FaceEntity],
       synchronize: false,
     }),
-    UsersModule,
     AttendanceModule,
     FaceRecognitionModule,
     CameraModule,
