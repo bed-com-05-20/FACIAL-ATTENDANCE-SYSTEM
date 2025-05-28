@@ -16,15 +16,19 @@ import { GatewayModule } from './face-gateway/face-gateway.module';
   imports: [
     MulterModule.register({ dest: './uploads' }),
     TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'postgres',
-      password: 'admin',
-     // database: 'attendance',
-      database: 'mydb',
+    //   type: 'postgres',
+    //   host: 'localhost',
+    //   port: 5432,
+    //   username: 'postgres',
+    //   password: 'admin',
+    //  // database: 'attendance',
+    //   database: 'mydb',
+     type: 'postgres',
+     url: 'postgres://yrfsvjec:2nJPN38MBU1fDq-DAcPKvk-HHAp8AYZY@lucky.db.elephantsql.com/yrfsvjec',
+    
       entities: [User,Students,FaceEntity],
       synchronize: false,
+
     }),
     UsersModule,
     AttendanceModule,
