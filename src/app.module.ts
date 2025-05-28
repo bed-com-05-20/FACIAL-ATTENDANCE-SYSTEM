@@ -17,11 +17,17 @@ import { GatewayModule } from './face-gateway/face-gateway.module';
     MulterModule.register({ dest: './uploads' }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: 'dpg-d0rj9vbipnbc73b9v590-a.oregon-postgres.render.com',
       port: 5432,
-      username: 'postgres',
-      password: 'taya6000',
-      database: 'attendance',
+      username: 'root',
+      password: 'sdA2unoaD7e9Sq6sErMNY3JchIZQIkVN',
+      database: 'attendance_04gg',
+        ssl: true,
+  extra: {
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  },
       entities: [User,Students,FaceEntity],
       synchronize: false,
     }),

@@ -4,6 +4,9 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'ty
 
 @Entity('students')
 export class Students {
+  @Column()
+  @PrimaryGeneratedColumn()
+  id:number
   
   @Column()
   name: string;
