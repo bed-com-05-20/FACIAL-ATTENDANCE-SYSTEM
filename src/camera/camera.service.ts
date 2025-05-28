@@ -1,29 +1,40 @@
-// src/camera/camera.service.ts
 import { Injectable, Logger } from '@nestjs/common';
-import { exec } from 'child_process';
 import * as path from 'path';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
+import * as fs from 'fs';
+import axios from 'axios';
 
 @Injectable()
 export class CameraService {
   private readonly logger = new Logger(CameraService.name);
 
+  // Use your actual Raspberry Pi IP and correct port
+  private readonly piCameraUrl = 'http://192.168.43.75:5000/capture'; 
+
   async captureImage(filename: string): Promise<string> {
-    const scriptPath = path.resolve(__dirname, '..', '..', 'scripts', 'capture.py');
-    const imageFolder = path.resolve(__dirname, '..', '..', 'images');
-    const imagePath = path.join(imageFolder, filename);
+    const imageDir = path.join(process.cwd(), 'images');
+    const savePath = path.join(imageDir, filename);
 
     try {
-      const command = `python "${scriptPath}" ${filename}`;
-      this.logger.log(`Running command: ${command}`);
-      await execAsync(command);
-      this.logger.log(`Image captured at: ${imagePath}`);
-      return imagePath;
+      if (!fs.existsSync(imageDir)) {
+        fs.mkdirSync(imageDir, { recursive: true });
+      }
+
+      this.logger.log(`Requesting image from Raspberry Pi at ${this.piCameraUrl}`);
+      const response = await axios.get(this.piCameraUrl, { responseType: 'stream' });
+
+      const writer = fs.createWriteStream(savePath);
+      response.data.pipe(writer);
+
+      await new Promise<void>((resolve, reject) => {
+        writer.on('finish', resolve);
+        writer.on('error', reject);
+      });
+
+      this.logger.log(`Image saved at: ${savePath}`);
+      return savePath;
     } catch (error) {
-      this.logger.error('Camera capture failed', error);
-      throw new Error('Failed to capture image');
+      this.logger.error('Failed to fetch image from Raspberry Pi:', error.message);
+      throw new Error('Image capture failed');
     }
   }
 }

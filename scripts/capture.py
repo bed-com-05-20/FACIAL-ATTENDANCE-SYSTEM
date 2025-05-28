@@ -22,7 +22,7 @@ if not cap.isOpened():
 
 # Wait 5 seconds to give time for camera exposure and user preparation
 print("Preparing camera. Please wait 5 seconds...")
-time.sleep(10)
+time.sleep(1)
 
 # Read one frame from the camera
 ret, frame = cap.read()
