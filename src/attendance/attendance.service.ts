@@ -1,56 +1,107 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AttendanceEntity } from 'src/entity/attendance.entity';
-import { EnrollmentEntity } from 'src/entity/enrollment.entity';
+import { Students } from './students.entity';
+
 
 @Injectable()
 export class AttendanceService {
   constructor(
-    @InjectRepository(AttendanceEntity)
-    private readonly attendanceRepo: Repository<AttendanceEntity>,
-
-    @InjectRepository(EnrollmentEntity) // ✅ Ensure Enrollment is injected
-    private readonly enrollmentRepo: Repository<EnrollmentEntity>,
+    @InjectRepository(Students)
+    private readonly studentsRepo: Repository<Students>
   ) {}
 
-  async markAttendance(regNumber: string, status: 'Present' | 'Absent') {
-    // First, check if the student exists in Enrollment table
-    const student = await this.enrollmentRepo.findOne({ where: { regNumber } });
-  
-    if (!student) {
-      throw new NotFoundException(`Student with registration number ${regNumber} not found in Enrollment.`);
+  //  Mock enrollment for testing
+  async mockEnrollStudent(name: string, registrationNumber: string) {
+    const existing = await this.studentsRepo.findOne({ where: { registrationNumber } });
+    if (existing) {
+      return { message: 'Student already exists', students: existing };
     }
-  
-    // Check if attendance already exists for the student
-    let attendanceRecord = await this.attendanceRepo.findOne({ where: { regNumber } });
-  
-    if (!attendanceRecord) {
-      // Create a new attendance record
-      attendanceRecord = this.attendanceRepo.create({
-        regNumber: student.regNumber, 
-        status,
-      });
-  
-      // Save the new attendance record
-      await this.attendanceRepo.save(attendanceRecord);
-    } else {
-      // If record exists, update the status
-      attendanceRecord.status = status;
-      await this.attendanceRepo.save(attendanceRecord);
-    }
-  
-    return {
-      // message: 'Attendance marked successfully',
-      student: {
-        regNumber: student.regNumber,
-        status: attendanceRecord.status,
-      },
-    };
-  }
-  
 
-  async getAttendanceRecords() {
-    return this.attendanceRepo.find(); 
+    const students = this.studentsRepo.create({ name, registrationNumber, status: 'absent' });
+    return this.studentsRepo.save(students);
   }
+// Mark attendance for the first time
+async markAttendance(registrationNumber: string) {
+  const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
+
+  if (!student) {
+    throw new NotFoundException('Student not found');
+  }
+
+  const currentTime = new Date();
+
+  // Define exam start and end time
+  const examStartTime = new Date();
+  examStartTime.setHours(20, 21 , 0, 0); 
+  
+  const examEndTime = new Date(examStartTime);
+  examEndTime.setMinutes(examStartTime.getMinutes() + 1); 
+
+  // Prevent multiple markings within the exam session
+  if (student.lastMarkedAt) {
+    const lastMarked = new Date(student.lastMarkedAt);
+
+    const isAlreadyMarked =
+      lastMarked >= examStartTime && lastMarked <= examEndTime;
+
+    if (isAlreadyMarked) {
+      return {
+        message: 'Attendance already marked during this exam session.',
+        student: {
+          registrationNumber: student.registrationNumber,
+          name: student.name,
+          status: student.status,
+          markedAt: lastMarked.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
+        },
+      };
+    }
+  }
+
+  // Mark attendance for the first time
+  let status: string;
+  if (currentTime <= examStartTime) {
+    status = 'present';
+  } else if (currentTime > examStartTime && currentTime <= examEndTime) {
+    status = 'late';
+  } else {
+    status = 'absent';
+  }
+
+  student.status = status;
+  student.lastMarkedAt = currentTime;
+
+  await this.studentsRepo.save(student);
+
+  return {
+    message: `Attendance marked as ${status}`,
+    student: {
+      registrationNumber: student.registrationNumber,
+      name: student.name,
+      status: student.status,
+      markedAt: currentTime.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
+    },
+  };
+}
+
+
+
+
+    
+
+  //  Get all attendance records
+  async getAttendanceRecords() {
+    return this.studentsRepo.find();
+  }
+
+  //  Delete a student
+  async deleteStudent(registrationNumber: string) {
+    const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
+    if (!student) {
+      throw new NotFoundException('Student not found');
+    }
+    await this.studentsRepo.remove(student);
+    return { message: 'Student deleted successfully' };
+  }
+    
 }

@@ -1,25 +1,43 @@
 import { Module } from '@nestjs/common';
+import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ConfigModule } from '@nestjs/config';
+import { UsersModule } from './users/users.module';
 import { AttendanceModule } from './attendance/attendance.module';
-import { EnrollmentModule } from './enrollment/enrollment.module';
-import { EnrollmentEntity } from './entity/enrollment.entity';
-import { AttendanceEntity } from './entity/attendance.entity';
+import { FaceRecognitionModule } from './services/face-recognition.model'; // Make sure this is correctly named and points to a `.module.ts` file
+
+import { User } from './Entities/users.entity';
+import { Students } from './attendance/students.entity';
+import { FaceEntity } from './Entities/face.entity';
+import { CameraModule } from './camera/camera.module';
+import { FaceGateway } from './FaceGateway/face_gateway';
+import { GatewayModule } from './face-gateway/face-gateway.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    MulterModule.register({ dest: './uploads' }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'nestuser',
-      password: 'nestpassword',
-      database: 'facial_attendance',
-      entities: [EnrollmentEntity, AttendanceEntity],
-      synchronize: true, 
+      username: 'postgres',
+      password: 'admin',
+     // database: 'attendance',
+      database: 'mydb',
+      entities: [User,Students,FaceEntity],
+      synchronize: false,
     }),
-    EnrollmentModule, AttendanceModule,
+    UsersModule,
+    AttendanceModule,
+    FaceRecognitionModule,
+    CameraModule,
+    GatewayModule, // This module should handle the controller/service
   ],
+  controllers: [],
+  providers: [FaceGateway],
+  
+  
+  // controllers: [AppController, UsersController],
+  // providers: [AppService, UsersService],
+ //exports: [UsersService, FaceRecognitionModule],
 })
 export class AppModule {}

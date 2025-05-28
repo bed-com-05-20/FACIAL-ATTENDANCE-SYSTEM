@@ -1,26 +1,36 @@
-import { Controller, Post, Get, Body, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete, Param } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
-import { ApiTags } from '@nestjs/swagger';
-import { MarkAttendanceDto } from 'src/dto/markattendance_dto';
+import { MarkAttendanceDto } from './dto/markattendance_dto';
+import { MockEnrollDto } from './dto/mockenroll_dto';
 
-@ApiTags('Attendance')
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-  @Post()
-  async markAttendance(@Body() markAttendanceDto: MarkAttendanceDto) {
-    const { regNumber, status } = markAttendanceDto;
-    const updatedStudent = await this.attendanceService.markAttendance(regNumber, status);
+  //  Mock enroll a student 
 
-    return {
-      message: "Attendance marked successfully",
-      student: updatedStudent
-    };
+@Post('mock-enroll')
+async mockEnroll(@Body() data: MockEnrollDto) {
+  return this.attendanceService.mockEnrollStudent(data.name, data.registrationNumber);
+}
+
+
+  //  Mark attendance for a student
+  @Post('mark')
+  async mark(@Body() dto: MarkAttendanceDto) {
+    const updated = await this.attendanceService.markAttendance(dto.registrationNumber);
+    return { message: 'Attendance marked', student: updated };
   }
 
+  //  Get all attendance records
   @Get()
-  async getAttendanceRecords() {
+  async getRecords() {
     return this.attendanceService.getAttendanceRecords();
+  }
+
+  //  Delete a student by registration number
+  @Delete(':registrationNumber')
+  async deleteStudent(@Param('registrationNumber') registrationNumber: string) {
+    return this.attendanceService.deleteStudent(registrationNumber);
   }
 }
