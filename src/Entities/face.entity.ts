@@ -5,13 +5,13 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToOne } from 'typeorm';
 @Entity('FaceEntity')
 export class FaceEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id: number;
 
-  @Column()
+ @Column({ type: 'text' }) // Store descriptor as JSON string
   descriptor: string;
 
-  @Column()
-  registrationNumber: string;
+ @Column({ unique: true })
+   registrationNumber: string;
 
   @OneToOne(() => Students, student => student.faceEntity)
   student: Students;

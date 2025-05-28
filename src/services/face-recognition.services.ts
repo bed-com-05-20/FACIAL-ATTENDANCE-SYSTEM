@@ -1,4 +1,4 @@
-// src/services/face-recognition.service.ts
+
 import { Injectable, OnModuleInit, Logger, BadRequestException } from '@nestjs/common';
 import * as faceapi from 'face-api.js';
 import * as fs from 'fs';
@@ -22,23 +22,9 @@ export interface FaceDescriptorData {
 }
 
 export type RecognitionResult =
-  | {
-      match: true;
-      registrationNumber: string;
-      distance: number;
-      attendance: any;
-    }
-  | {
-      match: true;
-      registrationNumber: string;
-      distance: number;
-      attendanceError: string;
-    }
-  | {
-      match: false;
-      registrationNumber: null;
-      distance: number;
-    };
+  | { match: true; registrationNumber: string; distance: number; attendance: any }
+  | { match: true; registrationNumber: string; distance: number; attendanceError: string }
+  | { match: false; registrationNumber: null; distance: number };
 
 @Injectable()
 export class FaceRecognitionService implements OnModuleInit {
@@ -49,13 +35,12 @@ export class FaceRecognitionService implements OnModuleInit {
     @InjectRepository(FaceEntity)
     private readonly faceRepository: Repository<FaceEntity>,
     private readonly attendanceService: AttendanceService,
-    private readonly faceGateway: FaceGateway, // Injected gateway
+    private readonly faceGateway: FaceGateway,
   ) {}
 
   async onModuleInit(): Promise<void> {
     await this.loadModels();
     await this.loadDescriptorsFromDatabase();
-    this.logger.log('Models loaded and descriptors initialized.');
   }
 
   private async loadModels(): Promise<void> {
@@ -67,138 +52,82 @@ export class FaceRecognitionService implements OnModuleInit {
   }
 
   async detectFace(imagePath: string): Promise<{ descriptor: Float32Array }[]> {
-    let img;
-    try {
-      this.logger.log(`Loading image from path: ${imagePath}`);
-      img = await canvas.loadImage(imagePath);
-    } catch (error) {
-      this.logger.error(`Failed to load image: ${imagePath}`);
-      throw new Error(`Cannot load image from path: ${imagePath}`);
-    }
+    const img = await canvas.loadImage(imagePath);
+    const detections = await faceapi
+      .detectAllFaces(img as any, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.6 }))
+      .withFaceLandmarks()
+      .withFaceDescriptors();
 
-    try {
-      const detections = await faceapi
-        .detectAllFaces(
-          img as unknown as faceapi.TNetInput,
-          new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.6 }),
-        )
-        .withFaceLandmarks()
-        .withFaceDescriptors();
+    this.logger.log(`Detected ${detections.length} face(s).`);
+    this.faceGateway.emitEvent('face-detected', {
+      count: detections.length,
+      timestamp: new Date().toISOString(),
+    });
 
-      if (!detections.length) {
-        this.logger.warn('No faces detected.');
-      } else {
-        this.logger.log(`Detected ${detections.length} face(s).`);
-        this.faceGateway.emitEvent('face-detected', {
-          count: detections.length,
-          timestamp: new Date().toISOString(),
-        }); // Emit event
-      }
-
-      return detections.map((d) => ({
-        descriptor: d.descriptor,
-      }));
-    } catch (error) {
-      this.logger.error('Error during face detection:', error.message);
-      throw error;
-    } finally {
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
-        this.logger.log(`Deleted temp image: ${imagePath}`);
-      }
-    }
-  }
-
-  async ensureUniqueRegistration(registrationNumber: string): Promise<void> {
-    const existing = await this.faceRepository.findOne({ where: { registrationNumber } });
-    if (existing) {
-      throw new BadRequestException(`Registration number ${registrationNumber} already exists.`);
-    }
+    if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    return detections.map((d) => ({ descriptor: d.descriptor }));
   }
 
   async saveDescriptor(data: FaceDescriptorData): Promise<void> {
-    const descriptorArray = Array.from(data.descriptor);
-    if (descriptorArray.length !== 128) {
-      this.logger.error(`Invalid descriptor length: ${descriptorArray.length}`);
-      throw new Error('Descriptor must be a 128-length Float32Array');
-    }
-
     const entity = this.faceRepository.create({
-      descriptor: JSON.stringify(descriptorArray),
+      descriptor: JSON.stringify(Array.from(data.descriptor)),
       registrationNumber: data.registrationNumber,
     });
 
-    await this.faceRepository.save(entity);
+    await this.faceRepository.insert(entity);
     this.logger.log(`Descriptor saved for registrationNumber: ${data.registrationNumber}`);
-    await this.loadDescriptorsFromDatabase(); // Refresh cache
+    await this.loadDescriptorsFromDatabase();
   }
 
   async loadDescriptorsFromDatabase(): Promise<void> {
     const all = await this.faceRepository.find();
-    this.descriptors = all.map((entry) => {
-      const array = JSON.parse(entry.descriptor);
-      return {
-        descriptor: new Float32Array(array),
-        registrationNumber: entry.registrationNumber,
-      };
-    });
+    this.descriptors = all.map((entry) => ({
+      descriptor: new Float32Array(JSON.parse(entry.descriptor)),
+      registrationNumber: entry.registrationNumber,
+    }));
     this.logger.log(`Loaded ${this.descriptors.length} descriptors from DB`);
   }
 
   async recognizeUser(detectedFaces: { descriptor: Float32Array }[]): Promise<RecognitionResult[]> {
-    const threshold = 0.5;
+    const threshold = 0.6; // increased threshold for better recognition tolerance
     const results: RecognitionResult[] = [];
     const recognizedUsers = new Set<string>();
 
     for (const { descriptor } of detectedFaces) {
-      let bestMatch: FaceDescriptorData | null = null;
-      let bestDistance = Number.MAX_VALUE;
+      const matches: { stored: FaceDescriptorData; distance: number }[] = this.descriptors
+        .map((stored) => ({ stored, distance: faceapi.euclideanDistance(descriptor, stored.descriptor) }))
+        .filter(({ distance }) => distance < threshold)
+        .sort((a, b) => a.distance - b.distance);
 
-      for (const stored of this.descriptors) {
-        const distance = faceapi.euclideanDistance(descriptor, stored.descriptor);
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          bestMatch = stored;
-        }
-      }
-
-      if (bestMatch && bestDistance < threshold) {
-        if (!recognizedUsers.has(bestMatch.registrationNumber)) {
+      if (matches.length > 0) {
+        const { stored, distance } = matches[0];
+        if (!recognizedUsers.has(stored.registrationNumber)) {
           try {
-            const attendance = await this.attendanceService.markAttendance(bestMatch.registrationNumber);
-            recognizedUsers.add(bestMatch.registrationNumber);
-            results.push({
-              match: true,
-              registrationNumber: bestMatch.registrationNumber,
-              distance: bestDistance,
-              attendance,
-            });
+            const attendance = await this.attendanceService.markAttendance(stored.registrationNumber);
+            recognizedUsers.add(stored.registrationNumber);
+            results.push({ match: true, registrationNumber: stored.registrationNumber, distance, attendance });
           } catch (error) {
-            results.push({
-              match: true,
-              registrationNumber: bestMatch.registrationNumber,
-              distance: bestDistance,
-              attendanceError: error.message,
-            });
+            results.push({ match: true, registrationNumber: stored.registrationNumber, distance, attendanceError: error.message });
           }
         } else {
-          results.push({
-            match: true,
-            registrationNumber: bestMatch.registrationNumber,
-            distance: bestDistance,
-            attendanceError: 'Attendance already marked for this registration number',
-          });
+          results.push({ match: true, registrationNumber: stored.registrationNumber, distance, attendanceError: 'Attendance already marked' });
         }
       } else {
-        results.push({
-          match: false,
-          registrationNumber: null,
-          distance: bestDistance,
-        });
+        this.logger.warn(`Face not recognized. Closest match distance: ${Math.min(...this.descriptors.map(d => faceapi.euclideanDistance(descriptor, d.descriptor))).toFixed(4)}`);
+        results.push({ match: false, registrationNumber: null, distance: Number.MAX_VALUE });
       }
     }
 
     return results;
+  }
+
+  async getDescriptorByRegistrationNumber(registrationNumber: string): Promise<FaceDescriptorData[] | null> {
+    const entries = await this.faceRepository.find({ where: { registrationNumber } });
+    if (!entries.length) return null;
+    return entries.map(entry => ({
+      descriptor: new Float32Array(JSON.parse(entry.descriptor)),
+      registrationNumber: entry.registrationNumber,
+    }));
   }
 
   async getAllDescriptors(): Promise<any[]> {

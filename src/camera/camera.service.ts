@@ -7,7 +7,7 @@ import axios from 'axios';
 export class CameraService {
   private readonly logger = new Logger(CameraService.name);
 
-  // Use your actual Raspberry Pi IP and correct port
+
   private readonly piCameraUrl = 'http://192.168.43.75:5000/capture'; 
 
   async captureImage(filename: string): Promise<string> {

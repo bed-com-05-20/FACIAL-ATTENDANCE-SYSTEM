@@ -33,7 +33,7 @@ async markAttendance(registrationNumber: string) {
 
   // Define exam start and end time
   const examStartTime = new Date();
-  examStartTime.setHours(20, 21 , 0, 0); 
+  examStartTime.setHours(2, 0 , 0, 0); 
   
   const examEndTime = new Date(examStartTime);
   examEndTime.setMinutes(examStartTime.getMinutes() + 1); 

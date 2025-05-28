@@ -4,14 +4,12 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'ty
 
 @Entity('students')
 export class Students {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+  
   @Column()
   name: string;
 
-  @Column()
-  registrationNumber: string;
+  @Column({ unique: true })
+   registrationNumber: string;
 
   @Column()
   status: string;
