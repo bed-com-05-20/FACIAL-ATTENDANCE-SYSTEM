@@ -23,11 +23,18 @@ import { GatewayModule } from './face-gateway/face-gateway.module';
     //   password: 'admin',
     //  // database: 'attendance',
     //   database: 'mydb',
-    type: 'postgres',
-    url: 'postgres://yrfsvjec:2nJPN38MBU1fDq-DAcPKvk-HHAp8AYZY@lucky.db.elephantsql.com/yrfsvjec',
+    // type: 'postgres',
+    // url: 'postgres://yrfsvjec:2nJPN38MBU1fDq-DAcPKvk-HHAp8AYZY@lucky.db.elephantsql.com/yrfsvjec',
     
-      entities: [User,Students,FaceEntity],
-      synchronize: false,
+    host: 'dpg-d0rjqa2dbo4c73ae5reg-a',
+    port: 5432,
+    database: 'mydb_2rm1',
+    username: 'admin',
+    password: '9ihPR4vDDeRtDyMxmtk4DxUfVDajMBf1',
+    url: 'postgresql://admin:9ihPR4vDDeRtDyMxmtk4DxUfVDajMBf1@dpg-d0rjqa2dbo4c73ae5reg-a.oregon-postgres.render.com/mydb_2rm1',
+
+    entities: [User,Students,FaceEntity],
+    synchronize: false,
 
     }),
     UsersModule,
