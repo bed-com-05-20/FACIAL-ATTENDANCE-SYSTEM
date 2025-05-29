@@ -75,7 +75,7 @@ export class FaceRecognitionService implements OnModuleInit {
     return detections.map((d) => ({ descriptor: d.descriptor }));
   }
 
-  // Save a new descriptor to the database (no duplicates logic here)
+  // Save a new descriptor to the database 
   async saveDescriptor(data: FaceDescriptorData): Promise<void> {
     const entity = this.faceRepository.create({
       descriptor: JSON.stringify(Array.from(data.descriptor)),
@@ -157,4 +157,12 @@ export class FaceRecognitionService implements OnModuleInit {
     this.descriptors = [];
     this.logger.log('All descriptors deleted from DB and memory.');
   }
+
+
+async deleteDescriptorById(id: string): Promise<boolean> {
+  const result = await this.faceRepository.delete(id ); // UUID as string
+  return !!result.affected && result.affected > 0;
 }
+
+}
+
