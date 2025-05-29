@@ -1,4 +1,3 @@
-// src/controllers/face-recognition.controller.ts
 import {
   Controller,
   Post,
@@ -15,7 +14,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { CameraService } from '../camera/camera.service';
 import { FaceRecognitionService, RecognitionResult } from './face-recognition.services';
+import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiResponse } from '@nestjs/swagger';
 
+@ApiTags('Face Recognition') // Groups routes under "Face Recognition" in Swagger UI
 @Controller('face')
 export class FaceRecognitionController {
   private readonly logger = new Logger(FaceRecognitionController.name);
@@ -25,7 +26,32 @@ export class FaceRecognitionController {
     private readonly cameraService: CameraService,
   ) {}
 
+  /**
+   * Detects and recognizes a face using uploaded image or live camera feed.
+   * Saves a new descriptor if the face is not yet registered.
+   */
   @Post('detect')
+  @ApiOperation({ summary: 'Detect and recognize a face', description: 'Uploads or captures an image, detects the face, and either recognizes the user or saves a new descriptor.' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Optional image file (JPG, PNG)',
+        },
+        registrationNumber: {
+          type: 'string',
+          description: 'User registration number',
+        },
+      },
+      required: ['registrationNumber'],
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Face recognized or new descriptor saved.' })
+  @ApiResponse({ status: 500, description: 'Face detection failed.' })
   @UseInterceptors(FileInterceptor('file'))
   async detectFace(
     @UploadedFile() file: Express.Multer.File,
@@ -41,31 +67,27 @@ export class FaceRecognitionController {
     let tempPath: string | undefined;
 
     try {
-      // Step 1: Save or capture image
+      // Capture from camera if no file is uploaded
       if (!file) {
         const filename = `${Date.now()}.jpg`;
         tempPath = await this.cameraService.captureImage(filename);
       } else {
+        // Save uploaded file temporarily
         tempPath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
         fs.writeFileSync(tempPath, file.buffer);
       }
 
-      // Step 2: Detect all faces from image
+      // Detect faces and extract descriptors
       const detections = await this.faceService.detectFace(tempPath);
       const recognitionResults: RecognitionResult[] = [];
 
       for (const { descriptor } of detections) {
-        // Step 3: Try to recognize
         const matches = await this.faceService.recognizeUser([{ descriptor }]);
         const match = matches[0];
 
-        // Step 4: Match not found or match with wrong registration number
+        // If not recognized or doesn't match the expected registration number, save new
         if (!match.match || match.registrationNumber !== registrationNumber) {
-          // Add this as new descriptor for the given registration number
-          await this.faceService.saveDescriptor({
-            descriptor,
-            registrationNumber,
-          });
+          await this.faceService.saveDescriptor({ descriptor, registrationNumber });
 
           this.logger.log(`New descriptor added for registration number: ${registrationNumber}`);
           recognitionResults.push({
@@ -75,7 +97,7 @@ export class FaceRecognitionController {
             attendance: 'New descriptor saved',
           });
         } else {
-          // Already matched successfully
+          // Face was recognized correctly
           this.logger.log(`Face recognized: ${match.registrationNumber}`);
           recognitionResults.push(match);
         }
@@ -86,13 +108,20 @@ export class FaceRecognitionController {
       this.logger.error('Face detection failed', error.stack || error.message);
       throw new InternalServerErrorException('Face detection failed.');
     } finally {
+      // Clean up temporary image file
       if (tempPath && fs.existsSync(tempPath)) {
         fs.unlinkSync(tempPath);
       }
     }
   }
 
+  
+   // Deletes all stored face descriptors.
+   
   @Delete('all')
+  @ApiOperation({ summary: 'Delete all face descriptors' })
+  @ApiResponse({ status: 200, description: 'All descriptors deleted successfully.' })
+  @ApiResponse({ status: 500, description: 'Failed to delete descriptors.' })
   async deleteAllDescriptors() {
     try {
       await this.faceService.deleteAllDescriptors();
@@ -102,7 +131,13 @@ export class FaceRecognitionController {
     }
   }
 
+  
+   //Retrieves all stored face descriptors from the database.
+   
   @Get('all')
+  @ApiOperation({ summary: 'Get all face descriptors' })
+  @ApiResponse({ status: 200, description: 'List of all descriptors.' })
+  @ApiResponse({ status: 500, description: 'Failed to fetch descriptors.' })
   async getAllDescriptors() {
     try {
       return await this.faceService.getAllDescriptors();

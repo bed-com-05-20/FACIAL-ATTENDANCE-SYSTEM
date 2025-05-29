@@ -1,4 +1,3 @@
-
 import { Injectable, OnModuleInit, Logger, BadRequestException } from '@nestjs/common';
 import * as faceapi from 'face-api.js';
 import * as fs from 'fs';
@@ -10,17 +9,20 @@ import { FaceEntity } from 'src/Entities/face.entity';
 import { AttendanceService } from 'src/attendance/attendance.service';
 import { FaceGateway } from 'src/FaceGateway/face_gateway';
 
+// Monkey patch face-api.js to work with Node.js using canvas
 faceapi.env.monkeyPatch({
   Canvas: canvas.Canvas as any,
   Image: canvas.Image as any,
   ImageData: canvas.ImageData as any,
 });
 
+// Interface representing descriptor data to store
 export interface FaceDescriptorData {
   descriptor: Float32Array;
   registrationNumber: string;
 }
 
+// Type for the result of face recognition
 export type RecognitionResult =
   | { match: true; registrationNumber: string; distance: number; attendance: any }
   | { match: true; registrationNumber: string; distance: number; attendanceError: string }
@@ -29,20 +31,24 @@ export type RecognitionResult =
 @Injectable()
 export class FaceRecognitionService implements OnModuleInit {
   private readonly logger = new Logger(FaceRecognitionService.name);
+
+  // In-memory storage of all face descriptors from DB
   private descriptors: FaceDescriptorData[] = [];
 
   constructor(
     @InjectRepository(FaceEntity)
-    private readonly faceRepository: Repository<FaceEntity>,
-    private readonly attendanceService: AttendanceService,
-    private readonly faceGateway: FaceGateway,
+    private readonly faceRepository: Repository<FaceEntity>, // Database repository for face data
+    private readonly attendanceService: AttendanceService,   // Attendance marking service
+    private readonly faceGateway: FaceGateway                // WebSocket/event emitter gateway
   ) {}
 
+  // Runs when the module initializes (loads models and DB descriptors)
   async onModuleInit(): Promise<void> {
     await this.loadModels();
     await this.loadDescriptorsFromDatabase();
   }
 
+  // Load pre-trained face-api.js models from the filesystem
   private async loadModels(): Promise<void> {
     const modelPath = path.resolve(process.cwd(), 'models');
     await faceapi.nets.tinyFaceDetector.loadFromDisk(modelPath);
@@ -51,6 +57,7 @@ export class FaceRecognitionService implements OnModuleInit {
     this.logger.log(`Face API models loaded from: ${modelPath}`);
   }
 
+  // Detects faces in an image and returns descriptors
   async detectFace(imagePath: string): Promise<{ descriptor: Float32Array }[]> {
     const img = await canvas.loadImage(imagePath);
     const detections = await faceapi
@@ -64,21 +71,23 @@ export class FaceRecognitionService implements OnModuleInit {
       timestamp: new Date().toISOString(),
     });
 
-    if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
+    if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath); // Clean up uploaded image
     return detections.map((d) => ({ descriptor: d.descriptor }));
   }
 
+  // Save a new descriptor to the database (no duplicates logic here)
   async saveDescriptor(data: FaceDescriptorData): Promise<void> {
     const entity = this.faceRepository.create({
       descriptor: JSON.stringify(Array.from(data.descriptor)),
       registrationNumber: data.registrationNumber,
     });
 
-    await this.faceRepository.insert(entity);
+    await this.faceRepository.insert(entity); // Insert to prevent overwriting
     this.logger.log(`Descriptor saved for registrationNumber: ${data.registrationNumber}`);
-    await this.loadDescriptorsFromDatabase();
+    await this.loadDescriptorsFromDatabase(); // Reload in-memory list
   }
 
+  // Load all face descriptors from database into memory
   async loadDescriptorsFromDatabase(): Promise<void> {
     const all = await this.faceRepository.find();
     this.descriptors = all.map((entry) => ({
@@ -88,16 +97,17 @@ export class FaceRecognitionService implements OnModuleInit {
     this.logger.log(`Loaded ${this.descriptors.length} descriptors from DB`);
   }
 
+  // Recognize user from given face descriptors and mark attendance
   async recognizeUser(detectedFaces: { descriptor: Float32Array }[]): Promise<RecognitionResult[]> {
-    const threshold = 0.6; // increased threshold for better recognition tolerance
+    const threshold = 0.6;
     const results: RecognitionResult[] = [];
-    const recognizedUsers = new Set<string>();
+    const recognizedUsers = new Set<string>(); // Prevent multiple attendance
 
     for (const { descriptor } of detectedFaces) {
-      const matches: { stored: FaceDescriptorData; distance: number }[] = this.descriptors
+      const matches = this.descriptors
         .map((stored) => ({ stored, distance: faceapi.euclideanDistance(descriptor, stored.descriptor) }))
         .filter(({ distance }) => distance < threshold)
-        .sort((a, b) => a.distance - b.distance);
+        .sort((a, b) => a.distance - b.distance); // Closest match first
 
       if (matches.length > 0) {
         const { stored, distance } = matches[0];
@@ -113,6 +123,7 @@ export class FaceRecognitionService implements OnModuleInit {
           results.push({ match: true, registrationNumber: stored.registrationNumber, distance, attendanceError: 'Attendance already marked' });
         }
       } else {
+        // No match found within threshold
         this.logger.warn(`Face not recognized. Closest match distance: ${Math.min(...this.descriptors.map(d => faceapi.euclideanDistance(descriptor, d.descriptor))).toFixed(4)}`);
         results.push({ match: false, registrationNumber: null, distance: Number.MAX_VALUE });
       }
@@ -121,6 +132,7 @@ export class FaceRecognitionService implements OnModuleInit {
     return results;
   }
 
+  // Fetch all descriptors for a specific user (by registration number)
   async getDescriptorByRegistrationNumber(registrationNumber: string): Promise<FaceDescriptorData[] | null> {
     const entries = await this.faceRepository.find({ where: { registrationNumber } });
     if (!entries.length) return null;
@@ -130,6 +142,7 @@ export class FaceRecognitionService implements OnModuleInit {
     }));
   }
 
+  // Fetch all descriptors from DB
   async getAllDescriptors(): Promise<any[]> {
     const all = await this.faceRepository.find();
     return all.map((face) => ({
@@ -138,6 +151,7 @@ export class FaceRecognitionService implements OnModuleInit {
     }));
   }
 
+  // Delete all stored descriptors (DB + in-memory)
   async deleteAllDescriptors(): Promise<void> {
     await this.faceRepository.clear();
     this.descriptors = [];
