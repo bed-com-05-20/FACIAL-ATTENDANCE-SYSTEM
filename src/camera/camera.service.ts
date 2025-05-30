@@ -7,9 +7,12 @@ import axios from 'axios';
 export class CameraService {
   private readonly logger = new Logger(CameraService.name);
 
-  // Use your actual Raspberry Pi IP and correct port
-  private readonly piCameraUrl = 'http://192.168.43.75:5000/capture'; 
+  // Base URL of your Flask server (no endpoint or query here)
+  private readonly piBaseUrl = 'http://192.168.43.75:5000';
 
+  /**
+   * Capture a single image from the Flask Pi server.
+   */
   async captureImage(filename: string): Promise<string> {
     const imageDir = path.join(process.cwd(), 'images');
     const savePath = path.join(imageDir, filename);
@@ -19,8 +22,13 @@ export class CameraService {
         fs.mkdirSync(imageDir, { recursive: true });
       }
 
-      this.logger.log(`Requesting image from Raspberry Pi at ${this.piCameraUrl}`);
-      const response = await axios.get(this.piCameraUrl, { responseType: 'stream' });
+      const captureUrl = `${this.piBaseUrl}/capture`; // Proper URL
+
+      this.logger.log(`Requesting image from: ${captureUrl}`);
+
+      const response = await axios.get(captureUrl, {
+        responseType: 'stream',
+      });
 
       const writer = fs.createWriteStream(savePath);
       response.data.pipe(writer);
@@ -33,8 +41,26 @@ export class CameraService {
       this.logger.log(`Image saved at: ${savePath}`);
       return savePath;
     } catch (error) {
-      this.logger.error('Failed to fetch image from Raspberry Pi:', error.message);
+      this.logger.error('Failed to capture image:', error.message);
       throw new Error('Image capture failed');
+    }
+  }
+
+  /**
+   * Start a video or image capture session for a duration in seconds.
+   */
+  async startTimedCapture(duration: number): Promise<void> {
+    try {
+      const startUrl = `${this.piBaseUrl}/start-capture?duration=${duration}`;
+
+      this.logger.log(`Starting timed capture via: ${startUrl}`);
+
+      await axios.get(startUrl);
+
+      this.logger.log(`Timed capture started successfully`);
+    } catch (error) {
+      this.logger.error('Failed to start timed capture:', error.message);
+      throw new Error('Timed capture failed');
     }
   }
 }

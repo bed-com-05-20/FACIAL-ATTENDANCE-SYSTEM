@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Students } from './students.entity';
 
-
 @Injectable()
 export class AttendanceService {
   constructor(
@@ -11,7 +10,10 @@ export class AttendanceService {
     private readonly studentsRepo: Repository<Students>
   ) {}
 
-  //  Mock enrollment for testing
+  /**
+   * Mock enrollment of a student 
+   * If the student already exists, return the existing entry.
+   */
   async mockEnrollStudent(name: string, registrationNumber: string) {
     const existing = await this.studentsRepo.findOne({ where: { registrationNumber } });
     if (existing) {
@@ -21,80 +23,83 @@ export class AttendanceService {
     const students = this.studentsRepo.create({ name, registrationNumber, status: 'absent' });
     return this.studentsRepo.save(students);
   }
-// Mark attendance for the first time
-async markAttendance(registrationNumber: string) {
-  const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
 
-  if (!student) {
-    throw new NotFoundException('Student not found');
-  }
+  /**
+   * Marks attendance for a student based on their registration number.
+   * Prevents multiple markings within the same session.
+   */
+  async markAttendance(registrationNumber: string) {
+    const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
 
-  const currentTime = new Date();
-
-  // Define exam start and end time
-  const examStartTime = new Date();
-  examStartTime.setHours(20, 21 , 0, 0); 
-  
-  const examEndTime = new Date(examStartTime);
-  examEndTime.setMinutes(examStartTime.getMinutes() + 1); 
-
-  // Prevent multiple markings within the exam session
-  if (student.lastMarkedAt) {
-    const lastMarked = new Date(student.lastMarkedAt);
-
-    const isAlreadyMarked =
-      lastMarked >= examStartTime && lastMarked <= examEndTime;
-
-    if (isAlreadyMarked) {
-      return {
-        message: 'Attendance already marked during this exam session.',
-        student: {
-          registrationNumber: student.registrationNumber,
-          name: student.name,
-          status: student.status,
-          markedAt: lastMarked.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
-        },
-      };
+    if (!student) {
+      throw new NotFoundException('Student not found');
     }
-  }
 
-  // Mark attendance for the first time
-  let status: string;
-  if (currentTime <= examStartTime) {
-    status = 'present';
-  } else if (currentTime > examStartTime && currentTime <= examEndTime) {
-    status = 'late';
-  } else {
-    status = 'absent';
-  }
+    const currentTime = new Date();
 
-  student.status = status;
-  student.lastMarkedAt = currentTime;
-
-  await this.studentsRepo.save(student);
-
-  return {
-    message: `Attendance marked as ${status}`,
-    student: {
-      registrationNumber: student.registrationNumber,
-      name: student.name,
-      status: student.status,
-      markedAt: currentTime.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
-    },
-  };
-}
-
-
-
-
+    // Define exam start and  time 
+    const examStartTime = new Date();
+    examStartTime.setHours(21, 50, 0, 0); 
     
+    const examEndTime = new Date(examStartTime);
+    examEndTime.setMinutes(examStartTime.getMinutes() + 1); 
 
-  //  Get all attendance records
+    // Check if the student has already been marked during this session
+    if (student.lastMarkedAt) {
+      const lastMarked = new Date(student.lastMarkedAt);
+
+      const isAlreadyMarked =
+        lastMarked >= examStartTime && lastMarked <= examEndTime;
+
+      if (isAlreadyMarked) {
+        return {
+          message: 'Attendance already marked during this exam session.',
+          student: {
+            registrationNumber: student.registrationNumber,
+            name: student.name,
+            status: student.status,
+            markedAt: lastMarked.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
+          },
+        };
+      }
+    }
+
+    // Determine status based on the current time
+    let status: string;
+    if (currentTime <= examStartTime) {
+      status = 'present';
+    } else if (currentTime > examStartTime && currentTime <= examEndTime) {
+      status = 'late';
+    } else {
+      status = 'absent';
+    }
+
+    // Update and save student record
+    student.status = status;
+    student.lastMarkedAt = currentTime;
+    await this.studentsRepo.save(student);
+
+    return {
+      message: `Attendance marked as ${status}`,
+      student: {
+        registrationNumber: student.registrationNumber,
+        name: student.name,
+        status: student.status,
+        markedAt: currentTime.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
+      },
+    };
+  }
+
+  
+   // Retrieves all attendance records.
+   
   async getAttendanceRecords() {
     return this.studentsRepo.find();
   }
 
-  //  Delete a student
+  
+   //Deletes a student by registration number.
+   
   async deleteStudent(registrationNumber: string) {
     const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
     if (!student) {
@@ -103,5 +108,4 @@ async markAttendance(registrationNumber: string) {
     await this.studentsRepo.remove(student);
     return { message: 'Student deleted successfully' };
   }
-    
 }

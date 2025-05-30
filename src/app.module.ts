@@ -1,11 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsersModule } from './users/users.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { FaceRecognitionModule } from './services/face-recognition.model'; // Make sure this is correctly named and points to a `.module.ts` file
 
-import { User } from './Entities/users.entity';
 import { Students } from './attendance/students.entity';
 import { FaceEntity } from './Entities/face.entity';
 import { CameraModule } from './camera/camera.module';
@@ -16,28 +14,21 @@ import { GatewayModule } from './face-gateway/face-gateway.module';
   imports: [
     MulterModule.register({ dest: './uploads' }),
     TypeOrmModule.forRoot({
-    //   type: 'postgres',
-    //   host: 'localhost',
-    //   port: 5432,
-    //   username: 'postgres',
-    //   password: 'admin',
-    //  // database: 'attendance',
-    //   database: 'mydb',
-    // type: 'postgres',
-    // url: 'postgres://yrfsvjec:2nJPN38MBU1fDq-DAcPKvk-HHAp8AYZY@lucky.db.elephantsql.com/yrfsvjec',
-    
-    host: 'dpg-d0rjqa2dbo4c73ae5reg-a',
-    port: 5432,
-    database: 'mydb_2rm1',
-    username: 'admin',
-    password: '9ihPR4vDDeRtDyMxmtk4DxUfVDajMBf1',
-    url: 'postgresql://admin:9ihPR4vDDeRtDyMxmtk4DxUfVDajMBf1@dpg-d0rjqa2dbo4c73ae5reg-a.oregon-postgres.render.com/mydb_2rm1',
-
-    entities: [User,Students,FaceEntity],
-    synchronize: false,
-
+      type: 'postgres',
+      host: 'dpg-d0rj9vbipnbc73b9v590-a.oregon-postgres.render.com',
+      port: 5432,
+      username: 'root',
+      password: 'sdA2unoaD7e9Sq6sErMNY3JchIZQIkVN',
+      database: 'attendance_04gg',
+        ssl: true,
+  extra: {
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  },
+      entities: [Students,FaceEntity],
+      synchronize: false,
     }),
-    UsersModule,
     AttendanceModule,
     FaceRecognitionModule,
     CameraModule,
