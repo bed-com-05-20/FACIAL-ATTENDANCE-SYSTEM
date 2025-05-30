@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 
 // Import canvas and explicitly type Image and ImageData
 import * as canvas from 'canvas';
+import { METHODS } from 'http';
 
 const { Canvas, Image: CanvasImage, ImageData: CanvasImageData } = canvas;
 
@@ -20,7 +21,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS
-  app.enableCors();
+  app.enableCors({
+        origin:'*'
+  });
 
   // Swagger Configuration
   const config = new DocumentBuilder()

@@ -39,7 +39,7 @@ export class AttendanceService {
 
     // Define exam start and  time 
     const examStartTime = new Date();
-    examStartTime.setHours(2, 0, 0, 0); 
+    examStartTime.setHours(21, 50, 0, 0); 
     
     const examEndTime = new Date(examStartTime);
     examEndTime.setMinutes(examStartTime.getMinutes() + 1); 
