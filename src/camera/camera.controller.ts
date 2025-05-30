@@ -1,22 +1,20 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Controller, Get, Query, Res, Post, BadRequestException } from '@nestjs/common';
 import { CameraService } from './camera.service';
 import { Response } from 'express';
 import * as fs from 'fs';
 import { ApiTags, ApiOperation, ApiQuery, ApiResponse } from '@nestjs/swagger';
 
-@ApiTags('Camera') // Group this controller under 'Camera' in Swagger UI
+@ApiTags('Camera')
 @Controller('camera')
 export class CameraController {
   constructor(private readonly cameraService: CameraService) {}
 
   /**
-   * Capture an image using the Raspberry Pi camera and return it as a JPEG response.
-   * 
-   * @param filename - The filename to save the captured image as.
-   * @param res - Express response object to stream the image back.
+   * GET /camera/capture
+   * Captures a single image from the Raspberry Pi and returns it.
    */
   @Get('capture')
-  @ApiOperation({ summary: 'Capture image from Raspberry Pi camera' })
+  @ApiOperation({ summary: 'Capture a single image from Raspberry Pi camera' })
   @ApiQuery({
     name: 'filename',
     required: true,
@@ -25,16 +23,29 @@ export class CameraController {
   @ApiResponse({ status: 200, description: 'Returns the captured image as JPEG' })
   @ApiResponse({ status: 500, description: 'Failed to capture or send image' })
   async capture(@Query('filename') filename: string, @Res() res: Response) {
-    // Capture the image and get the path to the saved file
     const filePath = await this.cameraService.captureImage(filename);
-
-    // Create a readable stream to pipe the image into the response
     const imageStream = fs.createReadStream(filePath);
-
-    // Set the appropriate content type for a JPEG image
-    res.setHeader('Content-Type', 'image/jpeg');
-
-    // Pipe the image stream directly to the response
+    res.setHeader('Content-Type', 'image/jpg');
     imageStream.pipe(res);
+  }
+
+  /**
+   * POST /camera/start
+   * Starts camera auto-capturing for a given duration (in seconds).
+   */
+  @Post('start')
+  @ApiOperation({ summary: 'Start continuous image capture for N seconds' })
+  @ApiQuery({
+    name: 'duration',
+    required: true,
+    description: 'How many seconds to capture images',
+  })
+  async startCapture(@Query('duration') duration: number) {
+    if (!duration || duration <= 0) {
+      throw new BadRequestException('Duration must be a positive number');
+    }
+
+    await this.cameraService.startTimedCapture(duration);
+    return { message: `Camera started for ${duration} seconds` };
   }
 }

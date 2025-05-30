@@ -32,11 +32,13 @@ export class FaceRecognitionController {
     private readonly cameraService: CameraService,
   ) {}
 
+
+  
   /**
    * Detects and recognizes a face using uploaded image or live camera feed.
    * Saves a new descriptor if the face is not yet registered.
    */
- // === DETECT: Saves descriptors ===
+ // 
 @Post('detect')
 @ApiOperation({ summary: 'Detect and register face (saves descriptor)' })
 @ApiConsumes('multipart/form-data')
