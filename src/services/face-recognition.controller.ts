@@ -27,7 +27,7 @@ import {
 } from '@nestjs/swagger';
 import { validate as isUUID } from 'uuid';
 
-@ApiTags('Face Recognition') // Groups all endpoints under "Face Recognition" in Swagger UI
+@ApiTags('Face Recognition') // Groups routes under "Face Recognition" in Swagger
 @Controller('face')
 export class FaceRecognitionController {
   private readonly logger = new Logger(FaceRecognitionController.name);
@@ -37,11 +37,11 @@ export class FaceRecognitionController {
     private readonly cameraService: CameraService,
   ) {}
 
-  
-   //Endpoint to detect and register face(s).
-   //Accepts an image file or captures from camera if no file is uploaded.
-   //Saves face descriptor(s) tied to a registration number.
-   
+  /**
+   * Detect and register face descriptors.
+   * Accepts an uploaded image file or captures from camera if no file is sent.
+   * Stores descriptors with a user-provided registration number.
+   */
   @Post('detect')
   @ApiOperation({ summary: 'Detect and register face (saves descriptor)' })
   @ApiConsumes('multipart/form-data')
@@ -52,7 +52,7 @@ export class FaceRecognitionController {
         file: { type: 'string', format: 'binary', description: 'Optional image file' },
         registrationNumber: { type: 'string', description: 'User registration number' },
       },
-      required: ['registrationNumber'], // File is optional
+      required: ['registrationNumber'],
     },
   })
   @ApiResponse({ status: 201, description: 'Face detected and descriptor saved' })
@@ -73,21 +73,26 @@ export class FaceRecognitionController {
     let tempPath: string | undefined;
 
     try {
+      // If file not provided, capture image from Raspberry Pi camera
       if (!file) {
-        // Use camera to capture if file not uploaded
         const filename = `${Date.now()}.jpg`;
         tempPath = await this.cameraService.captureImage(filename);
       } else {
-        // Save uploaded file temporarily
+        // Save uploaded file to temporary path
         tempPath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
         fs.writeFileSync(tempPath, file.buffer);
       }
 
       const detections = await this.faceService.detectFace(tempPath);
+
+      // Return user-friendly message if no faces detected
       if (detections.length === 0) {
-        throw new BadRequestException('No faces detected in the image.');
+        return {
+          message: 'No faces were detected in the image. Please try again with a clearer image.',
+        };
       }
 
+      // Save descriptors for each face detected
       for (const { descriptor } of detections) {
         await this.faceService.saveDescriptor({ descriptor, registrationNumber });
       }
@@ -100,16 +105,17 @@ export class FaceRecognitionController {
       this.logger.error('Detection failed', err.stack || err.message);
       throw new InternalServerErrorException('Face detection failed.');
     } finally {
+      // Clean up temporary file
       if (tempPath && fs.existsSync(tempPath)) {
         fs.unlinkSync(tempPath);
       }
     }
   }
 
-  
-   // Endpoint to recognize a face and return matching user(s).
-   //Accepts an image file or uses camera if file is not uploaded.
-   
+  /**
+   * Recognize face from uploaded image or live capture.
+   * Returns matching registration numbers or user-friendly message if no match.
+   */
   @Post('recognize')
   @ApiOperation({ summary: 'Recognize face and mark attendance' })
   @ApiConsumes('multipart/form-data')
@@ -131,30 +137,49 @@ export class FaceRecognitionController {
     let tempPath: string | undefined;
 
     try {
+      // Capture from camera if no file uploaded
       if (!file) {
         const filename = `${Date.now()}.jpg`;
         tempPath = await this.cameraService.captureImage(filename);
       } else {
+        // Save uploaded image
         tempPath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
         fs.writeFileSync(tempPath, file.buffer);
       }
 
       const detections = await this.faceService.detectFace(tempPath);
+
+      // If no faces found, inform user clearly
+      if (detections.length === 0) {
+        return {
+          message: 'No faces were detected for recognition. Ensure your face is clearly visible.',
+        };
+      }
+
       const recognitionResults = await this.faceService.recognizeUser(detections);
+
+      // If no matches found, return helpful message
+      if (recognitionResults.length === 0) {
+        return {
+          message: 'Face not recognized. No match found in the system.',
+        };
+      }
+
       return recognitionResults;
     } catch (err) {
       this.logger.error('Recognition failed', err.stack || err.message);
       throw new InternalServerErrorException('Face recognition failed.');
     } finally {
+      // Delete temp file
       if (tempPath && fs.existsSync(tempPath)) {
         fs.unlinkSync(tempPath);
       }
     }
   }
 
-  
-   //Deletes all stored face descriptors from the database.
-   
+  /**
+   * Deletes all stored face descriptors.
+   */
   @Delete('all')
   @ApiOperation({ summary: 'Delete all face descriptors' })
   @ApiResponse({ status: 200, description: 'All descriptors deleted successfully.' })
@@ -168,9 +193,9 @@ export class FaceRecognitionController {
     }
   }
 
-  
-  // Retrieves all stored face descriptors.
-   
+  /**
+   * Returns all stored face descriptors.
+   */
   @Get('all')
   @ApiOperation({ summary: 'Get all face descriptors' })
   @ApiResponse({ status: 200, description: 'List of all descriptors.' })
@@ -184,10 +209,10 @@ export class FaceRecognitionController {
     }
   }
 
-  
-    //Deletes a single face descriptor by UUID.
-    //@param id - UUID of the descriptor
-   
+  /**
+   * Delete a specific face descriptor by UUID.
+   * @param id UUID of the descriptor to delete
+   */
   @Delete(':id')
   @ApiOperation({ summary: 'Delete descriptor by ID' })
   @ApiParam({ name: 'id', description: 'UUID of the descriptor', required: true })

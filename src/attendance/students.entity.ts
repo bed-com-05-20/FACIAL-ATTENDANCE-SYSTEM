@@ -17,8 +17,8 @@ export class Students {
   @Column()
   status: string;
 
-  @Column({ type: 'timestamp', nullable: true })
-  lastMarkedAt: Date;
+ @Column({ type: 'timestamp', nullable: true })
+  lastMarkedAt: Date | null;
 
   @OneToOne(() => FaceEntity, faceEntity => faceEntity.student, { nullable: true })
   @JoinColumn()

@@ -52,4 +52,18 @@ export class AttendanceController {
   async deleteStudent(@Param('registrationNumber') registrationNumber: string) {
     return this.attendanceService.deleteStudent(registrationNumber);
   }
+
+  /**
+   * Mark all students as absent
+   */
+  @Post('mark-all-absent')
+  @ApiOperation({ summary: 'Mark all students as absent' })
+  @ApiResponse({ status: 200, description: 'All students marked as absent' })
+  async markAllAbsent() {
+    const updatedStudents = await this.attendanceService.markAllAsAbsent();
+    return {
+      message: `${updatedStudents.length} student(s) marked as absent.`,
+      students: updatedStudents,
+    };
+  }
 }

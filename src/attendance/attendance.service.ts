@@ -7,7 +7,7 @@ import { Students } from './students.entity';
 export class AttendanceService {
   constructor(
     @InjectRepository(Students)
-    private readonly studentsRepo: Repository<Students>
+    private readonly studentsRepo: Repository<Students>,
   ) {}
 
   /**
@@ -37,12 +37,12 @@ export class AttendanceService {
 
     const currentTime = new Date();
 
-    // Define exam start and  time 
+    // Define exam start and end time
     const examStartTime = new Date();
-    examStartTime.setHours(21, 50, 0, 0); 
-    
+    examStartTime.setHours(21, 50, 0, 0);
+
     const examEndTime = new Date(examStartTime);
-    examEndTime.setMinutes(examStartTime.getMinutes() + 1); 
+    examEndTime.setMinutes(examStartTime.getMinutes() + 1);
 
     // Check if the student has already been marked during this session
     if (student.lastMarkedAt) {
@@ -90,16 +90,16 @@ export class AttendanceService {
     };
   }
 
-  
-   // Retrieves all attendance records.
-   
+  /**
+   * Retrieves all attendance records.
+   */
   async getAttendanceRecords() {
     return this.studentsRepo.find();
   }
 
-  
-   //Deletes a student by registration number.
-   
+  /**
+   * Deletes a student by registration number.
+   */
   async deleteStudent(registrationNumber: string) {
     const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
     if (!student) {
@@ -107,5 +107,22 @@ export class AttendanceService {
     }
     await this.studentsRepo.remove(student);
     return { message: 'Student deleted successfully' };
+  }
+
+  /**
+   * Marks all students as absent and updates the database.
+   */
+  async markAllAsAbsent() {
+    const students = await this.studentsRepo.find();
+
+    const updatedStudents = students.map(student => {
+      student.status = 'absent';
+      student.lastMarkedAt = null;
+      return student;
+    });
+
+    await this.studentsRepo.save(updatedStudents);
+
+    return updatedStudents;
   }
 }
