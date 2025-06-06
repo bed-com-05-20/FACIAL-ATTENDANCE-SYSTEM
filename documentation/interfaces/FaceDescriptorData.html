@@ -1,0 +1,486 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>facial-attendance-system documentation</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+	   <link rel="stylesheet" href="../styles/style.css">
+        <link rel="stylesheet" href="../styles/dark.css">
+    </head>
+    <body>
+          <script>
+               // Blocking script to avoid flickering dark mode
+               // Dark mode toggle button
+               var useDark = window.matchMedia('(prefers-color-scheme: dark)');
+               var darkModeState = useDark.matches;
+               var $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               var $darkModeToggles = document.querySelectorAll('.dark-mode-switch');
+               var darkModeStateLocal = localStorage.getItem('compodoc_darkmode-state');
+
+               function checkToggle(check) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].checked = check;
+                    }
+               }
+
+               function toggleDarkMode(state) {
+                    if (window.localStorage) {
+                         localStorage.setItem('compodoc_darkmode-state', state);
+                    }
+
+                    checkToggle(state);
+
+                    const hasClass = document.body.classList.contains('dark');
+
+                    if (state) {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.add('dark');
+                         }
+                         if (!hasClass) {
+                              document.body.classList.add('dark');
+                         }
+                    } else {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.remove('dark');
+                         }
+                         if (hasClass) {
+                              document.body.classList.remove('dark');
+                         }
+                    }
+               }
+
+               useDark.addEventListener('change', function (evt) {
+                    toggleDarkMode(evt.matches);
+               });
+               if (darkModeStateLocal) {
+                    darkModeState = darkModeStateLocal === 'true';
+               }
+               toggleDarkMode(darkModeState);
+          </script>
+
+        <div class="navbar navbar-default navbar-fixed-top d-md-none p-0">
+               <div class="d-flex">
+                    <a href="../" class="navbar-brand">facial-attendance-system documentation</a>
+                    <button type="button" class="btn btn-default btn-menu ion-ios-menu" id="btn-menu"></button>
+               </div>
+        </div>
+
+        <div class="xs-menu menu" id="mobile-menu">
+                <div id="book-search-input" role="search"><input type="text" placeholder="Type to search"></div>            <compodoc-menu></compodoc-menu>
+        </div>
+
+        <div class="container-fluid main">
+           <div class="row main">
+               <div class="d-none d-md-block menu">
+                   <compodoc-menu mode="normal"></compodoc-menu>
+               </div>
+               <!-- START CONTENT -->
+               <div class="content interface">
+                   <div class="content-data">
+
+
+
+
+
+
+
+
+
+
+
+
+
+<ol class="breadcrumb">
+  <li class="breadcrumb-item">Interfaces</li>
+  <li class="breadcrumb-item"
+  >
+  FaceDescriptorData</li>
+</ol>
+
+<ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a href="#info" 
+                class="nav-link"
+                class="nav-link active"
+                role="tab" id="info-tab" data-bs-toggle="tab" data-link="info">Info</a>
+        </li>
+        <li class="nav-item">
+            <a href="#source" 
+                class="nav-link"
+                
+                role="tab" id="source-tab" data-bs-toggle="tab" data-link="source">Source</a>
+        </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade active in" id="info">
+        <p class="comment">
+            <h3>File</h3>
+        </p>
+        <p class="comment">
+            <code>src/services/face-recognition.services.ts</code>
+        </p>
+
+
+
+
+        <section data-compodoc="block-index">
+            <h3 id="index">Index</h3>
+            <table class="table table-sm table-bordered index-table">
+                <tbody>
+                    <tr>
+                        <td class="col-md-4">
+                            <h6><b>Properties</b></h6>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-md-4">
+                            <ul class="index-list">
+                                <li>
+                                        <a href="#descriptor" 
+>
+                                            descriptor
+                                        </a>
+                                </li>
+                                <li>
+                                        <a href="#registrationNumber" 
+>
+                                            registrationNumber
+                                        </a>
+                                </li>
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+
+
+            <section data-compodoc="block-properties">
+                <h3 id="inputs">Properties</h3>
+                    <table class="table table-sm table-bordered">
+                        <tbody>
+                                <tr>
+                                    <td class="col-md-4">
+                                        <a name="descriptor"></a>
+                                        <span class="name "><b>descriptor</b>
+                                            <a href="#descriptor">
+                                                <span class="icon ion-ios-link"></span>
+                                            </a>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="col-md-4">
+                                        <code>descriptor:     <code>Float32Array</code>
+</code>
+                                    </td>
+                                </tr>
+
+
+                                    <tr>
+                                        <td class="col-md-4">
+                                            <i>Type : </i>    <code>Float32Array</code>
+
+                                        </td>
+                                    </tr>
+
+
+
+
+
+                        </tbody>
+                    </table>
+                    <table class="table table-sm table-bordered">
+                        <tbody>
+                                <tr>
+                                    <td class="col-md-4">
+                                        <a name="registrationNumber"></a>
+                                        <span class="name "><b>registrationNumber</b>
+                                            <a href="#registrationNumber">
+                                                <span class="icon ion-ios-link"></span>
+                                            </a>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="col-md-4">
+                                        <code>registrationNumber:         <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+</code>
+                                    </td>
+                                </tr>
+
+
+                                    <tr>
+                                        <td class="col-md-4">
+                                            <i>Type : </i>        <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+
+                                        </td>
+                                    </tr>
+
+
+
+
+
+                        </tbody>
+                    </table>
+            </section>
+    </div>
+
+
+    <div class="tab-pane fade  tab-source-code" id="source">
+        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import { Injectable, OnModuleInit, Logger, BadRequestException } from &#x27;@nestjs/common&#x27;;
+import * as faceapi from &#x27;face-api.js&#x27;;
+import * as fs from &#x27;fs&#x27;;
+import * as path from &#x27;path&#x27;;
+import * as canvas from &#x27;canvas&#x27;;
+import { InjectRepository } from &#x27;@nestjs/typeorm&#x27;;
+import { Repository } from &#x27;typeorm&#x27;;
+import { FaceEntity } from &#x27;src/Entities/face.entity&#x27;;
+import { AttendanceService } from &#x27;src/attendance/attendance.service&#x27;;
+import { FaceGateway } from &#x27;src/FaceGateway/face_gateway&#x27;;
+
+// Monkey patch face-api.js to work with Node.js using canvas
+faceapi.env.monkeyPatch({
+  Canvas: canvas.Canvas as any,
+  Image: canvas.Image as any,
+  ImageData: canvas.ImageData as any,
+});
+
+// Interface representing descriptor data to store
+export interface FaceDescriptorData {
+  descriptor: Float32Array;
+  registrationNumber: string;
+}
+
+// Type for the result of face recognition
+export type RecognitionResult &#x3D;
+  | { match: true; registrationNumber: string; distance: number; attendance: any }
+  | { match: true; registrationNumber: string; distance: number; attendanceError: string }
+  | { match: false; registrationNumber: null; distance: number };
+
+@Injectable()
+export class FaceRecognitionService implements OnModuleInit {
+  private readonly logger &#x3D; new Logger(FaceRecognitionService.name);
+
+  // In-memory storage of all face descriptors from DB
+  private descriptors: FaceDescriptorData[] &#x3D; [];
+
+  constructor(
+    @InjectRepository(FaceEntity)
+    private readonly faceRepository: Repository&lt;FaceEntity&gt;, // Database repository for face data
+    private readonly attendanceService: AttendanceService,   // Attendance marking service
+    private readonly faceGateway: FaceGateway                // WebSocket/event emitter gateway
+  ) {}
+
+  // Runs when the module initializes (loads models and DB descriptors)
+  async onModuleInit(): Promise&lt;void&gt; {
+    await this.loadModels();
+    await this.loadDescriptorsFromDatabase();
+  }
+
+  // Load pre-trained face-api.js models from the filesystem
+  private async loadModels(): Promise&lt;void&gt; {
+    const modelPath &#x3D; path.resolve(process.cwd(), &#x27;models&#x27;);
+    await faceapi.nets.tinyFaceDetector.loadFromDisk(modelPath);
+    await faceapi.nets.faceLandmark68Net.loadFromDisk(modelPath);
+    await faceapi.nets.faceRecognitionNet.loadFromDisk(modelPath);
+    this.logger.log(&#x60;Face API models loaded from: ${modelPath}&#x60;);
+  }
+
+  // Detects faces in an image and returns descriptors
+  async detectFace(imagePath: string): Promise&lt;{ descriptor: Float32Array }[]&gt; {
+    const img &#x3D; await canvas.loadImage(imagePath);
+    const detections &#x3D; await faceapi
+      .detectAllFaces(img as any, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.6 }))
+      .withFaceLandmarks()
+      .withFaceDescriptors();
+
+    this.logger.log(&#x60;Detected ${detections.length} face(s).&#x60;);
+    this.faceGateway.emitEvent(&#x27;face-detected&#x27;, {
+      count: detections.length,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (fs.existsSync(imagePath)) fs.unlinkSync(imagePath); // Clean up uploaded image
+    return detections.map((d) &#x3D;&gt; ({ descriptor: d.descriptor }));
+  }
+
+  // Save a new descriptor to the database 
+  async saveDescriptor(data: FaceDescriptorData): Promise&lt;void&gt; {
+    const entity &#x3D; this.faceRepository.create({
+      descriptor: JSON.stringify(Array.from(data.descriptor)),
+      registrationNumber: data.registrationNumber,
+    });
+
+    await this.faceRepository.insert(entity); // Insert to prevent overwriting
+    this.logger.log(&#x60;Descriptor saved for registrationNumber: ${data.registrationNumber}&#x60;);
+    await this.loadDescriptorsFromDatabase(); // Reload in-memory list
+  }
+
+  // Load all face descriptors from database into memory
+  async loadDescriptorsFromDatabase(): Promise&lt;void&gt; {
+    const all &#x3D; await this.faceRepository.find();
+    this.descriptors &#x3D; all.map((entry) &#x3D;&gt; ({
+      descriptor: new Float32Array(JSON.parse(entry.descriptor)),
+      registrationNumber: entry.registrationNumber,
+    }));
+    this.logger.log(&#x60;Loaded ${this.descriptors.length} descriptors from DB&#x60;);
+  }
+
+  // Recognize user from given face descriptors and mark attendance
+  async recognizeUser(detectedFaces: { descriptor: Float32Array }[]): Promise&lt;RecognitionResult[]&gt; {
+    const threshold &#x3D; 0.6;
+    const results: RecognitionResult[] &#x3D; [];
+    const recognizedUsers &#x3D; new Set&lt;string&gt;(); // Prevent multiple attendance
+
+    for (const { descriptor } of detectedFaces) {
+      const matches &#x3D; this.descriptors
+        .map((stored) &#x3D;&gt; ({ stored, distance: faceapi.euclideanDistance(descriptor, stored.descriptor) }))
+        .filter(({ distance }) &#x3D;&gt; distance &lt; threshold)
+        .sort((a, b) &#x3D;&gt; a.distance - b.distance); // Closest match first
+
+      if (matches.length &gt; 0) {
+        const { stored, distance } &#x3D; matches[0];
+        if (!recognizedUsers.has(stored.registrationNumber)) {
+          try {
+            const attendance &#x3D; await this.attendanceService.markAttendance(stored.registrationNumber);
+            recognizedUsers.add(stored.registrationNumber);
+            results.push({ match: true, registrationNumber: stored.registrationNumber, distance, attendance });
+          } catch (error) {
+            results.push({ match: true, registrationNumber: stored.registrationNumber, distance, attendanceError: error.message });
+          }
+        } else {
+          results.push({ match: true, registrationNumber: stored.registrationNumber, distance, attendanceError: &#x27;Attendance already marked&#x27; });
+        }
+      } else {
+        // No match found within threshold
+        this.logger.warn(&#x60;Face not recognized. Closest match distance: ${Math.min(...this.descriptors.map(d &#x3D;&gt; faceapi.euclideanDistance(descriptor, d.descriptor))).toFixed(4)}&#x60;);
+        results.push({ match: false, registrationNumber: null, distance: Number.MAX_VALUE });
+      }
+    }
+
+    return results;
+  }
+
+  // Fetch all descriptors for a specific user (by registration number)
+  async getDescriptorByRegistrationNumber(registrationNumber: string): Promise&lt;FaceDescriptorData[] | null&gt; {
+    const entries &#x3D; await this.faceRepository.find({ where: { registrationNumber } });
+    if (!entries.length) return null;
+    return entries.map(entry &#x3D;&gt; ({
+      descriptor: new Float32Array(JSON.parse(entry.descriptor)),
+      registrationNumber: entry.registrationNumber,
+    }));
+  }
+
+  // Fetch all descriptors from DB
+  async getAllDescriptors(): Promise&lt;any[]&gt; {
+    const all &#x3D; await this.faceRepository.find();
+    return all.map((face) &#x3D;&gt; ({
+      ...face,
+      descriptor: JSON.parse(face.descriptor),
+    }));
+  }
+
+  // Delete all stored descriptors (DB + in-memory)
+  async deleteAllDescriptors(): Promise&lt;void&gt; {
+    await this.faceRepository.clear();
+    this.descriptors &#x3D; [];
+    this.logger.log(&#x27;All descriptors deleted from DB and memory.&#x27;);
+  }
+
+
+async deleteDescriptorById(id: string): Promise&lt;boolean&gt; {
+  const result &#x3D; await this.faceRepository.delete(id ); // UUID as string
+  return !!result.affected &amp;&amp; result.affected &gt; 0;
+}
+
+}
+
+</code></pre>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+                   </div><div class="search-results">
+    <div class="has-results">
+        <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+        <ul class="search-results-list"></ul>
+    </div>
+    <div class="no-results">
+        <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+    </div>
+</div>
+</div>
+               <!-- END CONTENT -->
+           </div>
+       </div>
+
+          <label class="dark-mode-switch">
+               <input type="checkbox">
+               <span class="slider">
+                    <svg class="slider-icon" viewBox="0 0 24 24" fill="none" height="20" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" width="20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+                    </svg>
+               </span>
+          </label>
+
+       <script>
+            var COMPODOC_CURRENT_PAGE_DEPTH = 1;
+            var COMPODOC_CURRENT_PAGE_CONTEXT = 'interface';
+            var COMPODOC_CURRENT_PAGE_URL = 'FaceDescriptorData.html';
+            var MAX_SEARCH_RESULTS = 15;
+       </script>
+
+       <script>
+               $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               checkToggle(darkModeState);
+               if ($darkModeToggleSwitchers.length > 0) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].addEventListener('change', function (event) {
+                              darkModeState = !darkModeState;
+                              toggleDarkMode(darkModeState);
+                         });
+                    }
+               }
+          </script>
+
+       <script src="../js/libs/custom-elements.min.js"></script>
+       <script src="../js/libs/lit-html.js"></script>
+
+       <script src="../js/menu-wc.js" defer></script>
+       <script nomodule src="../js/menu-wc_es5.js" defer></script>
+
+       <script src="../js/libs/bootstrap-native.js"></script>
+
+       <script src="../js/libs/es6-shim.min.js"></script>
+       <script src="../js/libs/EventDispatcher.js"></script>
+       <script src="../js/libs/promise.min.js"></script>
+
+       <script src="../js/compodoc.js"></script>
+
+       <script src="../js/tabs.js"></script>
+       <script src="../js/menu.js"></script>
+       <script src="../js/libs/clipboard.min.js"></script>
+       <script src="../js/libs/prism.js"></script>
+       <script src="../js/sourceCode.js"></script>
+          <script src="../js/search/search.js"></script>
+          <script src="../js/search/lunr.min.js"></script>
+          <script src="../js/search/search-lunr.js"></script>
+          <script src="../js/search/search_index.js"></script>
+       <script src="../js/lazy-load-graphs.js"></script>
+
+
+    </body>
+</html>
