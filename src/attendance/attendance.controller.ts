@@ -56,7 +56,7 @@ export class AttendanceController {
   /**
    * Mark all students as absent
    */
-  @Post('mark-all-absent')
+  @Get('mark-all-absent')
   @ApiOperation({ summary: 'Mark all students as absent' })
   @ApiResponse({ status: 200, description: 'All students marked as absent' })
   async markAllAbsent() {
