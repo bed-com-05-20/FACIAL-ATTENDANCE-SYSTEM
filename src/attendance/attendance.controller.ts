@@ -1,9 +1,8 @@
 import { Controller, Post, Body, Get, Delete, Param } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
-
+import { MarkAttendanceDto } from './dto/markattendance_dto';
+import { MockEnrollDto } from './dto/mockenroll_dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { MockEnrollDto } from 'src/dto/mockenroll_dto';
-import { MarkAttendanceDto } from 'src/dto/markattendance_dto';
 
 @ApiTags('Attendance') 
 @Controller('attendance')
@@ -52,5 +51,19 @@ export class AttendanceController {
   @ApiResponse({ status: 404, description: 'Student not found' })
   async deleteStudent(@Param('registrationNumber') registrationNumber: string) {
     return this.attendanceService.deleteStudent(registrationNumber);
+  }
+
+  /**
+   * Mark all students as absent
+   */
+  @Post('mark-all-absent')
+  @ApiOperation({ summary: 'Mark all students as absent' })
+  @ApiResponse({ status: 200, description: 'All students marked as absent' })
+  async markAllAbsent() {
+    const updatedStudents = await this.attendanceService.markAllAsAbsent();
+    return {
+      message: `${updatedStudents.length} student(s) marked as absent.`,
+      students: updatedStudents,
+    };
   }
 }
