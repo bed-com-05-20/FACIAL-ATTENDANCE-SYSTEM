@@ -108,4 +108,18 @@ export class AttendanceService {
     await this.studentsRepo.remove(student);
     return { message: 'Student deleted successfully' };
   }
+
+  async markAllAsAbsent() {
+    const students = await this.studentsRepo.find();
+
+    const updatedStudents = students.map(student => {
+      student.status = 'absent';
+      student.lastMarkedAt = null;
+      return student;
+    });
+
+    await this.studentsRepo.save(updatedStudents);
+
+    return updatedStudents;
+  }
 }
