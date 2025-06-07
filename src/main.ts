@@ -1,9 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import * as bodyParser from 'body-parser';
 
 // Import canvas and explicitly type Image and ImageData
 import * as canvas from 'canvas';
+import { METHODS } from 'http';
 
 const { Canvas, Image: CanvasImage, ImageData: CanvasImageData } = canvas;
 
@@ -18,9 +20,14 @@ const { Canvas, Image: CanvasImage, ImageData: CanvasImageData } = canvas;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(bodyParser.json({ limit: '40mb' }));
+  app.use(bodyParser.urlencoded({ limit: '40mb', extended: true }));
 
   // Enable CORS
-  app.enableCors()
+ app.enableCors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+});
 
   // Swagger Configuration
   const config = new DocumentBuilder()
