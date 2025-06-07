@@ -8,11 +8,11 @@ export class CameraService {
   private readonly logger = new Logger(CameraService.name);
 
   // Base URL of your Flask server (no endpoint or query here)
-  private readonly piBaseUrl = 'http://192.168.43.75:5000';
+  private readonly piBaseUrl = 'http://488e-137-115-7-146.ngrok-free.app';
 
-  /**
-   * Capture a single image from the Flask Pi server.
-   */
+  
+    //Capture images from the Flask Pi server.
+   
   async captureImage(filename: string): Promise<string> {
     const imageDir = path.join(process.cwd(), 'images');
     const savePath = path.join(imageDir, filename);
@@ -46,9 +46,9 @@ export class CameraService {
     }
   }
 
-  /**
-   * Start a video or image capture session for a duration in seconds.
-   */
+  
+    //Start a video or image capture session for a duration in seconds.
+   
   async startTimedCapture(duration: number): Promise<void> {
     try {
       const startUrl = `${this.piBaseUrl}/start-capture?duration=${duration}`;
@@ -64,3 +64,7 @@ export class CameraService {
     }
   }
 }
+
+
+
+

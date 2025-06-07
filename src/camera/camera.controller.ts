@@ -11,7 +11,7 @@ export class CameraController {
 
   /**
    * GET /camera/capture
-   * Captures a single image from the Raspberry Pi and returns it.
+   * Captures images from the Raspberry Pi and returns tem.
    */
   @Get('capture')
   @ApiOperation({ summary: 'Capture a single image from Raspberry Pi camera' })

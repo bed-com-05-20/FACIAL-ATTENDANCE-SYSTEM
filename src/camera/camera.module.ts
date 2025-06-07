@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CameraService } from './camera.service';
-import { CameraController } from './camera.controller';
+import { CameraController } from 'src/services/camera.controller';
 
 @Module({
   providers: [CameraService],
