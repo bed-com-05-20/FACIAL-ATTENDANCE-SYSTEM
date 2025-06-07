@@ -17,7 +17,7 @@ export class AttendanceController {
   @ApiResponse({ status: 201, description: 'Student enrolled successfully' })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   async mockEnroll(@Body() data: MockEnrollDto) {
-    return this.attendanceService.mockEnrollStudent(data.name, data.registrationNumber);
+    return this.attendanceService.enroll(data.name, data.registrationNumber);
   }
 
   /**
@@ -56,14 +56,14 @@ export class AttendanceController {
   /**
    * Mark all students as absent
    */
-  @Get('mark-all-absent')
-  @ApiOperation({ summary: 'Mark all students as absent' })
-  @ApiResponse({ status: 200, description: 'All students marked as absent' })
-  async markAllAbsent() {
-    const updatedStudents = await this.attendanceService.markAllAsAbsent();
-    return {
-      message: `${updatedStudents.length} student(s) marked as absent.`,
-      students: updatedStudents,
-    };
-  }
+@Get('mark-all-absent')
+@ApiOperation({ summary: 'Mark all students as absent' })
+@ApiResponse({ status: 200, description: 'All students marked as absent' })
+async markAllAbsent() {
+  const updatedStudents = await this.attendanceService.markAllAsAbsent();
+  return {
+    message: `${updatedStudents.students.length} student(s) marked as absent.`,
+    students: updatedStudents.students,
+  };
+}
 }

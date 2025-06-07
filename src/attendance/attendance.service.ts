@@ -5,28 +5,57 @@ import { Students } from './students.entity';
 
 @Injectable()
 export class AttendanceService {
+  attendanceService: any;
+  enrolluser(arg0: { registrationNumber: string; name: string | null; }) {
+    throw new Error('Method not implemented.');
+  }
+  enrollStudent(name: string, registrationNumber: string) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     @InjectRepository(Students)
     private readonly studentsRepo: Repository<Students>,
   ) {}
 
   /**
-   * Mock enrollment of a student 
-   * If the student already exists, return the existing entry.
+   * Enroll student if not already in DB. Return message accordingly.
+   * If name is not provided but the student exists, skip enrollment.
    */
-  async mockEnrollStudent(name: string, registrationNumber: string) {
+    async enroll(registrationNumber: string, name?: string) {
     const existing = await this.studentsRepo.findOne({ where: { registrationNumber } });
+
     if (existing) {
-      return { message: 'Student already exists', students: existing };
+      return {
+        message: 'Student already enrolled.',
+        student: existing,
+      };
     }
 
-    const students = this.studentsRepo.create({ name, registrationNumber, status: 'absent' });
-    return this.studentsRepo.save(students);
+    if (!name) {
+      return {
+        message: 'Student not enrolled: name is required for first-time enrollment.',
+        student: null,
+      };
+    }
+
+    const student = this.studentsRepo.create({
+      registrationNumber,
+      name,
+      status: 'absent',
+    });
+
+    await this.studentsRepo.save(student);
+
+    return {
+      message: 'Student enrolled successfully.',
+      student,
+    };
   }
 
+  
   /**
-   * Marks attendance for a student based on their registration number.
-   * Prevents multiple markings within the same session.
+   * Marks attendance based on the registration number.
+   * Prevents multiple markings within same exam session.
    */
   async markAttendance(registrationNumber: string) {
     const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
@@ -37,14 +66,14 @@ export class AttendanceService {
 
     const currentTime = new Date();
 
-    // Define exam start and end time
+    // Define exam time window
     const examStartTime = new Date();
     examStartTime.setHours(21, 50, 0, 0);
 
     const examEndTime = new Date(examStartTime);
     examEndTime.setMinutes(examStartTime.getMinutes() + 1);
 
-    // Check if the student has already been marked during this session
+    // Prevent double-marking
     if (student.lastMarkedAt) {
       const lastMarked = new Date(student.lastMarkedAt);
 
@@ -64,17 +93,17 @@ export class AttendanceService {
       }
     }
 
-    // Determine status based on the current time
+    // Determine status
     let status: string;
     if (currentTime <= examStartTime) {
       status = 'present';
-    } else if (currentTime > examStartTime && currentTime <= examEndTime) {
+    } else if (currentTime <= examEndTime) {
       status = 'late';
     } else {
       status = 'absent';
     }
 
-    // Update and save student record
+    // Update record
     student.status = status;
     student.lastMarkedAt = currentTime;
     await this.studentsRepo.save(student);
@@ -91,38 +120,43 @@ export class AttendanceService {
   }
 
   /**
-   * Retrieves all attendance records.
+   * Retrieves all student attendance records.
    */
   async getAttendanceRecords() {
     return this.studentsRepo.find();
   }
 
   /**
-   * Deletes a student by registration number.
+   * Deletes a student using registration number.
    */
   async deleteStudent(registrationNumber: string) {
     const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
+
     if (!student) {
       throw new NotFoundException('Student not found');
     }
+
     await this.studentsRepo.remove(student);
     return { message: 'Student deleted successfully' };
   }
 
   /**
-   * Marks all students as absent and updates the database.
+   * Marks all students as absent and clears last marked timestamps.
    */
   async markAllAsAbsent() {
     const students = await this.studentsRepo.find();
 
-    const updatedStudents = students.map(student => {
-      student.status = 'absent';
-      student.lastMarkedAt = null;
-      return student;
+    const updated = students.map((s) => {
+      s.status = 'absent';
+      s.lastMarkedAt = null;
+      return s;
     });
 
-    await this.studentsRepo.save(updatedStudents);
+    await this.studentsRepo.save(updated);
 
-    return updatedStudents;
+    return {
+      message: 'All students marked absent.',
+      students: updated,
+    };
   }
 }
