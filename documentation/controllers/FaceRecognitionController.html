@@ -1,0 +1,839 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>facial-attendance-system documentation</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <link rel="icon" type="image/x-icon" href="../images/favicon.ico">
+	   <link rel="stylesheet" href="../styles/style.css">
+        <link rel="stylesheet" href="../styles/dark.css">
+    </head>
+    <body>
+          <script>
+               // Blocking script to avoid flickering dark mode
+               // Dark mode toggle button
+               var useDark = window.matchMedia('(prefers-color-scheme: dark)');
+               var darkModeState = useDark.matches;
+               var $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               var $darkModeToggles = document.querySelectorAll('.dark-mode-switch');
+               var darkModeStateLocal = localStorage.getItem('compodoc_darkmode-state');
+
+               function checkToggle(check) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].checked = check;
+                    }
+               }
+
+               function toggleDarkMode(state) {
+                    if (window.localStorage) {
+                         localStorage.setItem('compodoc_darkmode-state', state);
+                    }
+
+                    checkToggle(state);
+
+                    const hasClass = document.body.classList.contains('dark');
+
+                    if (state) {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.add('dark');
+                         }
+                         if (!hasClass) {
+                              document.body.classList.add('dark');
+                         }
+                    } else {
+                         for (var i = 0; i < $darkModeToggles.length; i++) {
+                              $darkModeToggles[i].classList.remove('dark');
+                         }
+                         if (hasClass) {
+                              document.body.classList.remove('dark');
+                         }
+                    }
+               }
+
+               useDark.addEventListener('change', function (evt) {
+                    toggleDarkMode(evt.matches);
+               });
+               if (darkModeStateLocal) {
+                    darkModeState = darkModeStateLocal === 'true';
+               }
+               toggleDarkMode(darkModeState);
+          </script>
+
+        <div class="navbar navbar-default navbar-fixed-top d-md-none p-0">
+               <div class="d-flex">
+                    <a href="../" class="navbar-brand">facial-attendance-system documentation</a>
+                    <button type="button" class="btn btn-default btn-menu ion-ios-menu" id="btn-menu"></button>
+               </div>
+        </div>
+
+        <div class="xs-menu menu" id="mobile-menu">
+                <div id="book-search-input" role="search"><input type="text" placeholder="Type to search"></div>            <compodoc-menu></compodoc-menu>
+        </div>
+
+        <div class="container-fluid main">
+           <div class="row main">
+               <div class="d-none d-md-block menu">
+                   <compodoc-menu mode="normal"></compodoc-menu>
+               </div>
+               <!-- START CONTENT -->
+               <div class="content controller">
+                   <div class="content-data">
+
+
+
+
+
+<ol class="breadcrumb">
+  <li class="breadcrumb-item">Controllers</li>
+  <li class="breadcrumb-item" >FaceRecognitionController</li>
+</ol>
+
+<ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a href="#info" 
+                class="nav-link"
+                class="nav-link active"
+                role="tab" id="info-tab" data-bs-toggle="tab" data-link="info">Info</a>
+        </li>
+        <li class="nav-item">
+            <a href="#source" 
+                class="nav-link"
+                
+                role="tab" id="source-tab" data-bs-toggle="tab" data-link="source">Source</a>
+        </li>
+</ul>
+
+<div class="tab-content">
+    <div class="tab-pane fade active in" id="info">
+        <p class="comment">
+            <h3>File</h3>
+        </p>
+        <p class="comment">
+            <code>src/services/face-recognition.controller.ts</code>
+        </p>
+
+            <p class="comment">
+                <h3>Prefix</h3>
+            </p>
+            <p class="comment">
+                <code>face</code>
+            </p>
+
+
+
+
+
+
+            <section data-compodoc="block-index">
+    <h3 id="index">Index</h3>
+    <table class="table table-sm table-bordered index-table">
+        <tbody>
+
+                <tr>
+                    <td class="col-md-4">
+                        <h6><b>Methods</b></h6>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="col-md-4">
+                        <ul class="index-list">
+                            <li>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier">Async</span>
+                                <a href="#deleteAllDescriptors" >deleteAllDescriptors</a>
+                            </li>
+                            <li>
+                                    <span class="modifier"></span>
+                                    <span class="modifier">Async</span>
+                                <a href="#deleteById" >deleteById</a>
+                            </li>
+                            <li>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier">Async</span>
+                                <a href="#detectAndRegister" >detectAndRegister</a>
+                            </li>
+                            <li>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier">Async</span>
+                                <a href="#getAllDescriptors" >getAllDescriptors</a>
+                            </li>
+                            <li>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier"></span>
+                                    <span class="modifier">Async</span>
+                                <a href="#recognizeFace" >recognizeFace</a>
+                            </li>
+                        </ul>
+                    </td>
+                </tr>
+
+
+
+
+
+        </tbody>
+    </table>
+</section>
+
+            <section data-compodoc="block-methods">
+    
+    <h3 id="methods">
+        Methods
+    </h3>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="deleteAllDescriptors"></a>
+                    <span class="name">
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier">Async</span>
+                        <span ><b>deleteAllDescriptors</b></span>
+                        <a href="#deleteAllDescriptors"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>deleteAllDescriptors()</code>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-md-4">
+                    <b>Decorators : </b>
+                    <br />
+                    <code>@Delete(&#x27;all&#x27;)<br />@ApiOperation({summary: &#x27;Delete all face descriptors&#x27;})<br />@ApiResponse({status: 200, description: &#x27;All descriptors deleted successfully.&#x27;})<br />@ApiResponse({status: 500, description: &#x27;Failed to delete descriptors.&#x27;})<br /></code>
+                </td>
+            </tr>
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="152"
+                                    class="link-to-prism">src/services/face-recognition.controller.ts:152</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                        <div class="io-description">
+                            <b>Returns : </b>    <code>unknown</code>
+
+                        </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="deleteById"></a>
+                    <span class="name">
+                            <span class="modifier"></span>
+                            <span class="modifier">Async</span>
+                        <span ><b>deleteById</b></span>
+                        <a href="#deleteById"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>deleteById(id: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-md-4">
+                    <b>Decorators : </b>
+                    <br />
+                    <code>@Delete(&#x27;:id&#x27;)<br /></code>
+                </td>
+            </tr>
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="180"
+                                    class="link-to-prism">src/services/face-recognition.controller.ts:180</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                            <div class="io-description">
+                                <b>Parameters :</b>
+                                
+                                <table class="params">
+                                    <thead>
+                                        <tr>
+                                            <td>Name</td>
+                                                <td>Type</td>
+                                            <td>Optional</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                                <td>id</td>
+                                            <td>
+                                                            <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <div class="io-description">
+                            <b>Returns : </b>    <code>unknown</code>
+
+                        </div>
+                            <div class="io-description">
+                                
+                            </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="detectAndRegister"></a>
+                    <span class="name">
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier">Async</span>
+                        <span ><b>detectAndRegister</b></span>
+                        <a href="#detectAndRegister"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>detectAndRegister(file: Express.Multer.File, registrationNumber: <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank">string</a>)</code>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-md-4">
+                    <b>Decorators : </b>
+                    <br />
+                    <code>@Post(&#x27;detect&#x27;)<br />@ApiOperation({summary: &#x27;Detect and register face (saves descriptor)&#x27;})<br />@ApiConsumes(&#x27;multipart/form-data&#x27;)<br />@ApiBody({schema: undefined})<br />@UseInterceptors(undefined)<br /></code>
+                </td>
+            </tr>
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="56"
+                                    class="link-to-prism">src/services/face-recognition.controller.ts:56</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+                        <div class="io-description"><p>Detects and recognizes a face using uploaded image or live camera feed.
+Saves a new descriptor if the face is not yet registered.</p>
+</div>
+
+                            <div class="io-description">
+                                <b>Parameters :</b>
+                                
+                                <table class="params">
+                                    <thead>
+                                        <tr>
+                                            <td>Name</td>
+                                                <td>Type</td>
+                                            <td>Optional</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                                <td>file</td>
+                                            <td>
+                                                        <code>Express.Multer.File</code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                        <tr>
+                                                <td>registrationNumber</td>
+                                            <td>
+                                                            <code><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/string" target="_blank" >string</a></code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <div class="io-description">
+                            <b>Returns : </b>    <code>unknown</code>
+
+                        </div>
+                            <div class="io-description">
+                                
+                            </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="getAllDescriptors"></a>
+                    <span class="name">
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier">Async</span>
+                        <span ><b>getAllDescriptors</b></span>
+                        <a href="#getAllDescriptors"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>getAllDescriptors()</code>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-md-4">
+                    <b>Decorators : </b>
+                    <br />
+                    <code>@Get(&#x27;all&#x27;)<br />@ApiOperation({summary: &#x27;Get all face descriptors&#x27;})<br />@ApiResponse({status: 200, description: &#x27;List of all descriptors.&#x27;})<br />@ApiResponse({status: 500, description: &#x27;Failed to fetch descriptors.&#x27;})<br /></code>
+                </td>
+            </tr>
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="168"
+                                    class="link-to-prism">src/services/face-recognition.controller.ts:168</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                        <div class="io-description">
+                            <b>Returns : </b>    <code>unknown</code>
+
+                        </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <table class="table table-sm table-bordered">
+        <tbody>
+            <tr>
+                <td class="col-md-4">
+                    <a name="recognizeFace"></a>
+                    <span class="name">
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier"></span>
+                            <span class="modifier">Async</span>
+                        <span ><b>recognizeFace</b></span>
+                        <a href="#recognizeFace"><span class="icon ion-ios-link"></span></a>
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td class="col-md-4">
+                        <span class="modifier-icon icon ion-ios-reset"></span>
+                    <code>recognizeFace(file: Express.Multer.File)</code>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="col-md-4">
+                    <b>Decorators : </b>
+                    <br />
+                    <code>@Post(&#x27;recognize&#x27;)<br />@ApiOperation({summary: &#x27;Recognize face and mark attendance&#x27;})<br />@ApiConsumes(&#x27;multipart/form-data&#x27;)<br />@ApiBody({schema: undefined})<br />@UseInterceptors(undefined)<br /></code>
+                </td>
+            </tr>
+
+                    <tr>
+                        <td class="col-md-4">
+                            <div class="io-line">Defined in <a href="" data-line="113"
+                                    class="link-to-prism">src/services/face-recognition.controller.ts:113</a></div>
+                        </td>
+                    </tr>
+
+
+            <tr>
+                <td class="col-md-4">
+
+                            <div class="io-description">
+                                <b>Parameters :</b>
+                                
+                                <table class="params">
+                                    <thead>
+                                        <tr>
+                                            <td>Name</td>
+                                                <td>Type</td>
+                                            <td>Optional</td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                                <td>file</td>
+                                            <td>
+                                                        <code>Express.Multer.File</code>
+                                            </td>
+
+                                            <td>
+                                                    No
+                                            </td>
+
+
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <div class="io-description">
+                            <b>Returns : </b>    <code>unknown</code>
+
+                        </div>
+                            <div class="io-description">
+                                
+                            </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</section>    </div>
+
+
+    <div class="tab-pane fade  tab-source-code" id="source">
+        <pre class="line-numbers compodoc-sourcecode"><code class="language-typescript">import {
+  Controller,
+  Post,
+  UploadedFile,
+  UseInterceptors,
+  Body,
+  InternalServerErrorException,
+  Logger,
+  Get,
+  Delete,
+  Param,
+  NotFoundException,
+  BadRequestException,
+  
+} from &#x27;@nestjs/common&#x27;;
+import { FileInterceptor } from &#x27;@nestjs/platform-express&#x27;;
+import * as fs from &#x27;fs&#x27;;
+import * as path from &#x27;path&#x27;;
+import { CameraService } from &#x27;../camera/camera.service&#x27;;
+import { FaceRecognitionService, RecognitionResult } from &#x27;./face-recognition.services&#x27;;
+import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiResponse } from &#x27;@nestjs/swagger&#x27;;
+import { validate as isUUID } from &#x27;uuid&#x27;;
+
+
+@ApiTags(&#x27;Face Recognition&#x27;) // Groups routes under &quot;Face Recognition&quot; in Swagger UI
+@Controller(&#x27;face&#x27;)
+export class FaceRecognitionController {
+  private readonly logger &#x3D; new Logger(FaceRecognitionController.name);
+
+  constructor(
+    private readonly faceService: FaceRecognitionService,
+    private readonly cameraService: CameraService,
+  ) {}
+
+
+  
+  /**
+   * Detects and recognizes a face using uploaded image or live camera feed.
+   * Saves a new descriptor if the face is not yet registered.
+   */
+ // 
+@Post(&#x27;detect&#x27;)
+@ApiOperation({ summary: &#x27;Detect and register face (saves descriptor)&#x27; })
+@ApiConsumes(&#x27;multipart/form-data&#x27;)
+@ApiBody({
+  schema: {
+    type: &#x27;object&#x27;,
+    properties: {
+      file: { type: &#x27;string&#x27;, format: &#x27;binary&#x27;, description: &#x27;Image file&#x27; },
+      registrationNumber: { type: &#x27;string&#x27;, description: &#x27;User registration number&#x27; },
+    },
+    required: [&#x27;registrationNumber&#x27;], // file is optional now
+  },
+})
+@UseInterceptors(FileInterceptor(&#x27;file&#x27;))
+async detectAndRegister(
+  @UploadedFile() file: Express.Multer.File,
+  @Body(&#x27;registrationNumber&#x27;) registrationNumber: string,
+) {
+  if (!registrationNumber) throw new BadRequestException(&#x27;Registration number is required.&#x27;);
+
+  const uploadDir &#x3D; path.join(__dirname, &#x27;..&#x27;, &#x27;..&#x27;, &#x27;uploads&#x27;);
+  fs.mkdirSync(uploadDir, { recursive: true });
+
+  let tempPath: string | undefined &#x3D; undefined;  // Initialize as undefined
+
+  try {
+    if (!file) {
+      // Capture image from camera service if file is missing
+      const filename &#x3D; &#x60;${Date.now()}.jpg&#x60;;
+      tempPath &#x3D; await this.cameraService.captureImage(filename);
+    } else {
+      tempPath &#x3D; path.join(uploadDir, &#x60;${Date.now()}-${file.originalname}&#x60;);
+      fs.writeFileSync(tempPath, file.buffer);
+    }
+
+    const detections &#x3D; await this.faceService.detectFace(tempPath);
+    if (detections.length &#x3D;&#x3D;&#x3D; 0) {
+      throw new BadRequestException(&#x27;No faces detected in the image.&#x27;);
+    }
+
+    for (const { descriptor } of detections) {
+      await this.faceService.saveDescriptor({ descriptor, registrationNumber });
+    }
+
+    return {
+      message: &#x60;${detections.length} face(s) detected and descriptor(s) saved&#x60;,
+      registrationNumber,
+    };
+  } catch (err) {
+    this.logger.error(&#x27;Detection failed&#x27;, err.stack || err.message);
+    throw new InternalServerErrorException(&#x27;Face detection failed.&#x27;);
+  } finally {
+    if (tempPath &amp;&amp; fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
+    }
+  }
+}
+
+
+@Post(&#x27;recognize&#x27;)
+@ApiOperation({ summary: &#x27;Recognize face and mark attendance&#x27; })
+@ApiConsumes(&#x27;multipart/form-data&#x27;)
+@ApiBody({
+  schema: {
+    type: &#x27;object&#x27;,
+    properties: {
+      file: { type: &#x27;string&#x27;, format: &#x27;binary&#x27;, description: &#x27;Optional image file&#x27; },
+    },
+  },
+})
+@UseInterceptors(FileInterceptor(&#x27;file&#x27;))
+async recognizeFace(@UploadedFile() file: Express.Multer.File) {
+  const uploadDir &#x3D; path.join(__dirname, &#x27;..&#x27;, &#x27;..&#x27;, &#x27;uploads&#x27;);
+  fs.mkdirSync(uploadDir, { recursive: true });
+
+  let tempPath: string | undefined &#x3D; undefined; // Initialize as undefined
+
+  try {
+    if (!file) {
+      // Capture image from camera service
+      const filename &#x3D; &#x60;${Date.now()}.jpg&#x60;;
+      tempPath &#x3D; await this.cameraService.captureImage(filename);
+    } else {
+      // Use uploaded image
+      tempPath &#x3D; path.join(uploadDir, &#x60;${Date.now()}-${file.originalname}&#x60;);
+      fs.writeFileSync(tempPath, file.buffer);
+    }
+
+    const detections &#x3D; await this.faceService.detectFace(tempPath);
+    const recognitionResults &#x3D; await this.faceService.recognizeUser(detections);
+    return recognitionResults;
+  } catch (err) {
+    this.logger.error(&#x27;Recognition failed&#x27;, err.stack || err.message);
+    throw new InternalServerErrorException(&#x27;Face recognition failed.&#x27;);
+  } finally {
+    if (tempPath &amp;&amp; fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
+    }
+  }
+}
+
+
+
+  
+   // Deletes all stored face descriptors.
+   
+  @Delete(&#x27;all&#x27;)
+  @ApiOperation({ summary: &#x27;Delete all face descriptors&#x27; })
+  @ApiResponse({ status: 200, description: &#x27;All descriptors deleted successfully.&#x27; })
+  @ApiResponse({ status: 500, description: &#x27;Failed to delete descriptors.&#x27; })
+  async deleteAllDescriptors() {
+    try {
+      await this.faceService.deleteAllDescriptors();
+      return { message: &#x27;All descriptors deleted successfully&#x27; };
+    } catch (err) {
+      throw new InternalServerErrorException(&#x27;Failed to delete all descriptors&#x27;);
+    }
+  }
+
+  
+   //Retrieves all stored face descriptors from the database.
+   
+  @Get(&#x27;all&#x27;)
+  @ApiOperation({ summary: &#x27;Get all face descriptors&#x27; })
+  @ApiResponse({ status: 200, description: &#x27;List of all descriptors.&#x27; })
+  @ApiResponse({ status: 500, description: &#x27;Failed to fetch descriptors.&#x27; })
+  async getAllDescriptors() {
+    try {
+      return await this.faceService.getAllDescriptors();
+    } catch (error) {
+      this.logger.error(&#x27;Failed to fetch descriptors&#x27;, error.stack || error.message);
+      throw new InternalServerErrorException(&#x27;Failed to fetch data.&#x27;);
+    }
+  }
+
+
+
+@Delete(&#x27;:id&#x27;)
+async deleteById(@Param(&#x27;id&#x27;) id: string) {
+  if (!isUUID(id)) {
+    throw new BadRequestException(&#x27;Invalid UUID format&#x27;);
+  }
+
+  const deleted &#x3D; await this.faceService.deleteDescriptorById(id);
+
+  if (!deleted) {
+    throw new NotFoundException(&#x27;Descriptor not found&#x27;);
+  }
+
+  return { message: &#x27;Descriptor deleted successfully&#x27; };
+}
+}
+</code></pre>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                   </div><div class="search-results">
+    <div class="has-results">
+        <h1 class="search-results-title"><span class='search-results-count'></span> results matching "<span class='search-query'></span>"</h1>
+        <ul class="search-results-list"></ul>
+    </div>
+    <div class="no-results">
+        <h1 class="search-results-title">No results matching "<span class='search-query'></span>"</h1>
+    </div>
+</div>
+</div>
+               <!-- END CONTENT -->
+           </div>
+       </div>
+
+          <label class="dark-mode-switch">
+               <input type="checkbox">
+               <span class="slider">
+                    <svg class="slider-icon" viewBox="0 0 24 24" fill="none" height="20" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" width="20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>
+                    </svg>
+               </span>
+          </label>
+
+       <script>
+            var COMPODOC_CURRENT_PAGE_DEPTH = 1;
+            var COMPODOC_CURRENT_PAGE_CONTEXT = 'controller';
+            var COMPODOC_CURRENT_PAGE_URL = 'FaceRecognitionController.html';
+            var MAX_SEARCH_RESULTS = 15;
+       </script>
+
+       <script>
+               $darkModeToggleSwitchers = document.querySelectorAll('.dark-mode-switch input');
+               checkToggle(darkModeState);
+               if ($darkModeToggleSwitchers.length > 0) {
+                    for (var i = 0; i < $darkModeToggleSwitchers.length; i++) {
+                         $darkModeToggleSwitchers[i].addEventListener('change', function (event) {
+                              darkModeState = !darkModeState;
+                              toggleDarkMode(darkModeState);
+                         });
+                    }
+               }
+          </script>
+
+       <script src="../js/libs/custom-elements.min.js"></script>
+       <script src="../js/libs/lit-html.js"></script>
+
+       <script src="../js/menu-wc.js" defer></script>
+       <script nomodule src="../js/menu-wc_es5.js" defer></script>
+
+       <script src="../js/libs/bootstrap-native.js"></script>
+
+       <script src="../js/libs/es6-shim.min.js"></script>
+       <script src="../js/libs/EventDispatcher.js"></script>
+       <script src="../js/libs/promise.min.js"></script>
+
+       <script src="../js/compodoc.js"></script>
+
+       <script src="../js/tabs.js"></script>
+       <script src="../js/menu.js"></script>
+       <script src="../js/libs/clipboard.min.js"></script>
+       <script src="../js/libs/prism.js"></script>
+       <script src="../js/sourceCode.js"></script>
+          <script src="../js/search/search.js"></script>
+          <script src="../js/search/lunr.min.js"></script>
+          <script src="../js/search/search-lunr.js"></script>
+          <script src="../js/search/search_index.js"></script>
+       <script src="../js/lazy-load-graphs.js"></script>
+
+
+    </body>
+</html>
