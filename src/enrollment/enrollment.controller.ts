@@ -8,10 +8,10 @@ import { EnrollmentDto } from 'src/dto/enrollment.dto';
 export class EnrollmentController {
   constructor(private readonly enrollmentService: EnrollmentService) {}
 
-  @Post('enroll')
-  async enrollStudent(@Body() createEnrollmentDto: EnrollmentDto) {
-    return this.enrollmentService.enrollStudent(createEnrollmentDto);
-  }
+  // @Post('enroll')
+  // async enrollStudent(@Body() createEnrollmentDto: EnrollmentDto) {
+  //   return this.enrollmentService.enrollStudent(createEnrollmentDto);
+  // }
 
   @Get(':regNumber')
   async getStudent(@Param('regNumber') regNumber: string) {
