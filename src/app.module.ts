@@ -9,6 +9,8 @@ import { FaceEntity } from './Entities/face.entity';
 import { CameraModule } from './camera/camera.module';
 import { FaceGateway } from './FaceGateway/face_gateway';
 import { GatewayModule } from './face-gateway/face-gateway.module';
+import { ExamSessionEntity } from './entity/examsession.entity';
+import { AttendanceHistoryEntity } from './entity/history.entity';
 
 @Module({
   imports: [
@@ -26,13 +28,14 @@ import { GatewayModule } from './face-gateway/face-gateway.module';
       rejectUnauthorized: false,
     },
   },
-      entities: [Students,FaceEntity],
+      entities: [Students,FaceEntity, ExamSessionEntity, AttendanceHistoryEntity],
+      migrations: ['migrations/*.ts'],
       synchronize: false,
     }),
     AttendanceModule,
     FaceRecognitionModule,
     CameraModule,
-    GatewayModule, // This module should handle the controller/service
+    GatewayModule, 
   ],
   controllers: [],
   providers: [FaceGateway],
