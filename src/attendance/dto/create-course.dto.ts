@@ -8,15 +8,31 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateCourseDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  examName: string;
   
   @ApiProperty()
   @IsString()
   @IsNotEmpty()
   room: string;
+
+
+ @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  supervisor: string;
+
+
+ @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  examName: string;
+
+
+ @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  date: string;
+
+
 
   @ApiProperty()
   @IsString()
@@ -28,11 +44,7 @@ export class CreateCourseDto {
   @IsNotEmpty()
   endTime: string;
 
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  supervisor: string;
-
+ 
   @ApiProperty()
   @IsArray()
   @ArrayNotEmpty()

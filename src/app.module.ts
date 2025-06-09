@@ -28,7 +28,7 @@ import { Course } from './attendance/course.entity';
     },
   },
       entities: [Students,FaceEntity,Course],
-      synchronize:true,
+      synchronize:false,
     }),
     AttendanceModule,
     FaceRecognitionModule,

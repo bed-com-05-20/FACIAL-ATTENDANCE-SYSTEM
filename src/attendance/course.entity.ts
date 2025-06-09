@@ -12,6 +12,10 @@ export class Course {
   @Column()
   room: string;
 
+  @Column({ type: 'timestamp', nullable: true }) 
+ date: string;
+
+
   @Column()
   startTime: string;
 

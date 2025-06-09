@@ -171,6 +171,7 @@ async markAttendance(registrationNumber: string) {
     const course = this.courseRepo.create({
       examName: dto.examName,
       room: dto.room,
+      date: dto.date,
       startTime: dto.startTime,
       endTime: dto.endTime,
       supervisor: dto.supervisor,
