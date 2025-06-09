@@ -1,13 +1,16 @@
-import { Controller, Post, Body, Get, Delete, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete, Param, UsePipes, ValidationPipe, ParseIntPipe } from '@nestjs/common';
 import { AttendanceService } from './attendance.service';
 import { MarkAttendanceDto } from './dto/markattendance_dto';
 import { MockEnrollDto } from './dto/mockenroll_dto';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { Course } from './course.entity';
+import { CreateCourseDto } from './dto/create-course.dto';
 
 @ApiTags('Attendance') 
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
+
 
   /**
    * Mock enroll a student with name and registration number
@@ -66,4 +69,52 @@ async markAllAbsent() {
     students: updatedStudents.students,
   };
 }
+
+
+/*
+controller for course generation
+*/ 
+
+
+  @Post('/create-new-coures')
+  @ApiOperation({ summary: 'Create a new course with assigned students' })
+  @ApiResponse({ status: 201, description: 'Course successfully created', type: Course })
+  @ApiBody({ type: CreateCourseDto })
+  async create(@Body() createCourseDto: CreateCourseDto) {
+    return this.attendanceService.createCourseWithStudents(createCourseDto);
+  }
+
+  @Get('/getCourseById/:id')
+  @ApiOperation({ summary: 'Get a single course by ID including enrolled students' })
+  @ApiParam({ name: 'id', type: Number, description: 'ID of the course' })
+  @ApiResponse({ status: 200, description: 'Course retrieved', type: Course })
+  async findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.attendanceService.findCourseWithStudents(id);
+  }
+
+  @Get('/getAllCourses')
+  @ApiOperation({ summary: 'Get all courses with their enrolled students' })
+  @ApiResponse({ status: 200, description: 'List of courses retrieved', type: [Course] })
+  async findAll() {
+    return this.attendanceService.findAllCoursesWithStudents();
+  }
+
+  @Delete('/deleteCourseById/:ids')
+  @ApiOperation({ summary: 'Delete one or more courses by their IDs' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        ids: {
+          type: 'array',
+          items: { type: 'number' },
+          example: [1, 2, 3],
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Deleted course IDs' })
+  async delete(@Body() body: { ids: number[] }) {
+    return this.attendanceService.deleteCourses(body.ids);
+  }
 }

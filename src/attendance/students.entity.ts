@@ -1,6 +1,7 @@
-// students.entity.ts
+
 import { FaceEntity } from 'src/Entities/face.entity';
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn, ManyToMany, JoinTable } from 'typeorm';
+import { Course } from './course.entity';
 
 @Entity('students')
 export class Students {
@@ -23,4 +24,9 @@ export class Students {
   @OneToOne(() => FaceEntity, faceEntity => faceEntity.student, { nullable: true })
   @JoinColumn()
   faceEntity: FaceEntity;
+
+  @ManyToMany(() => Course, course => course.students)
+  @JoinTable()
+  courses: Course[];
+
 }

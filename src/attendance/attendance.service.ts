@@ -1,20 +1,21 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Students } from './students.entity';
+import { Course } from './course.entity';
+import { CreateCourseDto } from './dto/create-course.dto';
 
 @Injectable()
 export class AttendanceService {
   attendanceService: any;
-  enrolluser(arg0: { registrationNumber: string; name: string | null; }) {
-    throw new Error('Method not implemented.');
-  }
-  enrollStudent(name: string, registrationNumber: string) {
-    throw new Error('Method not implemented.');
-  }
+  attendanceRepository: any;
   constructor(
     @InjectRepository(Students)
     private readonly studentsRepo: Repository<Students>,
+
+    @InjectRepository(Course)
+    private courseRepo: Repository<Course>,
+
   ) {}
 
   /**
@@ -57,67 +58,60 @@ export class AttendanceService {
    * Marks attendance based on the registration number.
    * Prevents multiple markings within same exam session.
    */
-  async markAttendance(registrationNumber: string) {
-    const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
+async markAttendance(registrationNumber: string) {
+  const student = await this.studentsRepo.findOne({
+    where: { registrationNumber },
+  });
 
-    if (!student) {
-      throw new NotFoundException('Student not found');
-    }
-
-    const currentTime = new Date();
-
-    // Define exam time window
-    const examStartTime = new Date();
-    examStartTime.setHours(21, 50, 0, 0);
-
-    const examEndTime = new Date(examStartTime);
-    examEndTime.setMinutes(examStartTime.getMinutes() + 1);
-
-    // Prevent double-marking
-    if (student.lastMarkedAt) {
-      const lastMarked = new Date(student.lastMarkedAt);
-
-      const isAlreadyMarked =
-        lastMarked >= examStartTime && lastMarked <= examEndTime;
-
-      if (isAlreadyMarked) {
-        return {
-          message: 'Attendance already marked during this exam session.',
-          student: {
-            registrationNumber: student.registrationNumber,
-            name: student.name,
-            status: student.status,
-            markedAt: lastMarked.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
-          },
-        };
-      }
-    }
-
-    // Determine status
-    let status: string;
-    if (currentTime <= examStartTime) {
-      status = 'present';
-    } else if (currentTime <= examEndTime) {
-      status = 'late';
-    } else {
-      status = 'absent';
-    }
-
-    // Update record
-    student.status = status;
-    student.lastMarkedAt = currentTime;
-    await this.studentsRepo.save(student);
-
-    return {
-      message: `Attendance marked as ${status}`,
-      student: {
-        registrationNumber: student.registrationNumber,
-        name: student.name,
-        status: student.status,
-        markedAt: currentTime.toLocaleString('en-MW', { timeZone: 'Africa/Blantyre' }),
-      },
-    };
+  if (!student) {
+    throw new NotFoundException('Student not found');
   }
+
+  const currentTime = new Date();
+
+  // Check if attendance was already marked today
+  if (student.lastMarkedAt) {
+    const lastMarked = new Date(student.lastMarkedAt);
+
+    const alreadyMarkedToday =
+      currentTime.getFullYear() === lastMarked.getFullYear() &&
+      currentTime.getMonth() === lastMarked.getMonth() &&
+      currentTime.getDate() === lastMarked.getDate();
+
+    if (alreadyMarkedToday) {
+      return {
+        message: 'Attendance already marked today.',
+        student: {
+          registrationNumber: student.registrationNumber,
+          name: student.name,
+          status: student.status,
+          markedAt: lastMarked.toLocaleString('en-MW', {
+            timeZone: 'Africa/Blantyre',
+          }),
+        },
+      };
+    }
+  }
+
+  // Mark the student as present
+  student.status = 'present';
+  student.lastMarkedAt = currentTime;
+
+  await this.studentsRepo.save(student);
+
+  return {
+    message: 'Attendance marked as present.',
+    student: {
+      registrationNumber: student.registrationNumber,
+      name: student.name,
+      status: student.status,
+      markedAt: currentTime.toLocaleString('en-MW', {
+        timeZone: 'Africa/Blantyre',
+      }),
+    },
+  };
+}
+
 
   /**
    * Retrieves all student attendance records.
@@ -159,4 +153,60 @@ export class AttendanceService {
       students: updated,
     };
   }
+
+
+  /*
+  this is history generation functions
+  */ 
+    async createCourseWithStudents(dto: CreateCourseDto): Promise<Course> {
+      const students = await this.studentsRepo.find({
+    where: {
+      registrationNumber: In(dto.studentIds),
+    },
+  });
+
+  if (students.length === 0) {
+    throw new NotFoundException('No students found with provided registration numbers.');
+  }
+    const course = this.courseRepo.create({
+      examName: dto.examName,
+      room: dto.room,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+      supervisor: dto.supervisor,
+      students,
+    });
+
+    return this.courseRepo.save(course);
+  }
+
+  async findCourseWithStudents(id: number): Promise<Course> {
+    const course = await this.courseRepo.findOne({
+      where: { id },
+      relations: ['students'],
+    });
+
+    if (!course) throw new NotFoundException(`Course with ID ${id} not found`);
+    return course;
+  }
+
+  async findAllCoursesWithStudents(): Promise<Course[]> {
+    return this.courseRepo.find({
+      relations: ['students'],
+    });
+  }
+
+  async deleteCourses(ids: number[]): Promise<{ deleted: number[] }> {
+    const courses = await this.courseRepo.findByIds(ids);
+
+    if (courses.length === 0) {
+      throw new NotFoundException('No matching courses found to delete.');
+    }
+
+    await this.courseRepo.remove(courses);
+    return { deleted: courses.map(c => c.id) };
+  }
+
+  
+  
 }

@@ -9,6 +9,7 @@ import { FaceEntity } from './Entities/face.entity';
 import { CameraModule } from './camera/camera.module';
 import { FaceGateway } from './FaceGateway/face_gateway';
 import { GatewayModule } from './face-gateway/face-gateway.module';
+import { Course } from './attendance/course.entity';
 
 @Module({
   imports: [
@@ -26,8 +27,8 @@ import { GatewayModule } from './face-gateway/face-gateway.module';
       rejectUnauthorized: false,
     },
   },
-      entities: [Students,FaceEntity],
-      synchronize: false,
+      entities: [Students,FaceEntity,Course],
+      synchronize:true,
     }),
     AttendanceModule,
     FaceRecognitionModule,

@@ -6,6 +6,7 @@ import * as bodyParser from 'body-parser';
 // Import canvas and explicitly type Image and ImageData
 import * as canvas from 'canvas';
 import { METHODS } from 'http';
+import { ValidationPipe } from '@nestjs/common';
 
 const { Canvas, Image: CanvasImage, ImageData: CanvasImageData } = canvas;
 
@@ -39,6 +40,12 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
+
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }));
 
   // Start server
   await app.listen(process.env.PORT ?? 4000);
