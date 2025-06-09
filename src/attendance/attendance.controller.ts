@@ -99,22 +99,22 @@ controller for course generation
     return this.attendanceService.findAllCoursesWithStudents();
   }
 
-  @Delete('/deleteCourseById/:ids')
-  @ApiOperation({ summary: 'Delete one or more courses by their IDs' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        ids: {
-          type: 'array',
-          items: { type: 'number' },
-          example: [1, 2, 3],
-        },
+ @Delete('/deleteCourseById')
+@ApiOperation({ summary: 'Delete one or more courses by their IDs' })
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      ids: {
+        type: 'array',
+        items: { type: 'number' },
+        example: [1, 2, 3],
       },
     },
-  })
-  @ApiResponse({ status: 200, description: 'Deleted course IDs' })
-  async delete(@Body() body: { ids: number[] }) {
-    return this.attendanceService.deleteCourses(body.ids);
-  }
+  },
+})
+@ApiResponse({ status: 200, description: 'Deleted course IDs' })
+async delete(@Body() body: { ids: number[] }) {
+  return this.attendanceService.deleteCourses(body.ids);
+}
 }
