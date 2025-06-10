@@ -91,6 +91,7 @@ async detectAndRegister(
     if (detections.length === 0) {
       return {
         message: 'No faces were detected in the image. Please try again with a clearer image.',
+        status:"false"
       };
     }
 
@@ -103,6 +104,7 @@ async detectAndRegister(
 
     return {
       message: `${detections.length} face(s) detected and descriptor(s) saved`,
+      status:"true",
       registrationNumber,
       name: name || null,
     };
