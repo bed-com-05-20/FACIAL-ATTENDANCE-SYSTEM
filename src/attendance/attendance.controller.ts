@@ -48,7 +48,7 @@ export class AttendanceController {
   /**
    * Delete a student by registration number
    */
-  @Delete(':registrationNumber')
+  @Delete('/deleteStudent/:registrationNumber')
   @ApiOperation({ summary: 'Delete student by registration number' })
   @ApiResponse({ status: 200, description: 'Student deleted successfully' })
   @ApiResponse({ status: 404, description: 'Student not found' })
@@ -99,7 +99,7 @@ controller for course generation
     return this.attendanceService.findAllCoursesWithStudents();
   }
 
- @Delete('/deleteCourseById')
+ @Delete('/deleteCourse')
 @ApiOperation({ summary: 'Delete one or more courses by their IDs' })
 @ApiBody({
   schema: {

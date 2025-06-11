@@ -197,17 +197,27 @@ async markAttendance(registrationNumber: string) {
     });
   }
 
-async deleteCourses(ids: number[]): Promise<{ deleted: number[]; notFound: number[] }> {
-  const existingCourses = await this.courseRepo.findBy({ id: In(ids) });
-  const existingIds = existingCourses.map(course => course.id);
+async deleteCourses(ids: number[]) {
+  const courses = await this.courseRepo.find({
+    where: { id: In(ids) },
+    relations: ['students'],
+  });
 
+  const existingIds = courses.map(course => course.id);
   const notFound = ids.filter(id => !existingIds.includes(id));
 
   if (existingIds.length === 0) {
     throw new NotFoundException('No matching courses found to delete.');
   }
 
-  await this.courseRepo.delete(existingIds); 
+  // Remove student associations first
+  for (const course of courses) {
+    course.students = [];
+    await this.courseRepo.save(course);
+  }
+
+  // Now delete courses
+  await this.courseRepo.delete(existingIds);
 
   return {
     deleted: existingIds,
