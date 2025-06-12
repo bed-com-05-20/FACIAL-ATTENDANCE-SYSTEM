@@ -16,10 +16,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import * as fs from 'fs';
 import * as path from 'path';
 import { CameraService } from '../camera/camera.service';
-import { FaceRecognitionService, RecognitionResult } from './face-recognition.services';
-import { ExamSessionEntity } from 'src/entity/examsession.entity';
-import { InjectRepository } from '@nestjs/typeorm';
-
+import { FaceRecognitionService } from './face-recognition.services';
 import {
   ApiTags,
   ApiOperation,
@@ -29,22 +26,18 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 import { validate as isUUID } from 'uuid';
-import { AttendanceHistoryEntity } from 'src/entity/history.entity';
-import { Repository } from 'typeorm';
-import { Students } from 'src/attendance/students.entity';
-import { RecognizeFaceDto } from 'src/dto/recognize-face.dto';
+import { AttendanceService } from 'src/attendance/attendance.service';
 
 @ApiTags('Face Recognition') // Groups all routes under the "Face Recognition" category in Swagger UI
 @Controller('face')
 export class FaceRecognitionController {
+  [x: string]: any;
   private readonly logger = new Logger(FaceRecognitionController.name);
 
   constructor(
     private readonly faceService: FaceRecognitionService,
     private readonly cameraService: CameraService,
-    @InjectRepository(Students) private studentRepo: Repository<Students>,
- @InjectRepository(ExamSessionEntity) private examSessionRepo: Repository<ExamSessionEntity>,   
-  @InjectRepository(AttendanceHistoryEntity) private attendanceHistoryRepo: Repository<AttendanceHistoryEntity>,
+     private readonly attendanceService: AttendanceService,
   ) {}
 
   /**
@@ -52,75 +45,80 @@ export class FaceRecognitionController {
    * @summary Detects face(s) and saves their descriptors using a registration number
    * @description Accepts an uploaded image or captures from a camera. Extracts face descriptors and saves them under the given registration number.
    */
-  @Post('detect')
-  @ApiOperation({ summary: 'Detect and register face (saves descriptor)' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: { type: 'string', format: 'binary', description: 'Optional image file' },
-        registrationNumber: { type: 'string', description: 'User registration number' },
-      },
-      required: ['registrationNumber'],
+@Post('detect')
+@ApiOperation({ summary: 'Detect and register face (saves descriptor)' })
+@ApiConsumes('multipart/form-data')
+@ApiBody({
+  schema: {
+    type: 'object',
+    properties: {
+      file: { type: 'string', format: 'binary', description: 'Optional image file' },
+      registrationNumber: { type: 'string', description: 'User registration number' },
+      name: { type: 'string', description: 'Optional name of the person' },
     },
-  })
-  @ApiResponse({ status: 201, description: 'Face detected and descriptor saved' })
-  @ApiResponse({ status: 400, description: 'No faces detected or registration number missing' })
-  @ApiResponse({ status: 500, description: 'Face detection failed' })
-  @UseInterceptors(FileInterceptor('file'))
-  async detectAndRegister(
-    @UploadedFile() file: Express.Multer.File,
-    @Body('registrationNumber') registrationNumber: string,
-  ) {
-    if (!registrationNumber) {
-      throw new BadRequestException('Registration number is required.');
+    required: ['registrationNumber'],
+  },
+})
+@ApiResponse({ status: 201, description: 'Face detected and descriptor saved' })
+@ApiResponse({ status: 400, description: 'No faces detected or registration number missing' })
+@ApiResponse({ status: 500, description: 'Face detection failed' })
+@UseInterceptors(FileInterceptor('file'))
+async detectAndRegister(
+  @UploadedFile() file: Express.Multer.File,
+  @Body('registrationNumber') registrationNumber: string,
+  @Body('name') name?: string,
+) {
+  if (!registrationNumber) {
+    throw new BadRequestException('Registration number is required.');
+  }
+
+  const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+  fs.mkdirSync(uploadDir, { recursive: true });
+
+  let tempPath: string | undefined;
+
+  try {
+    if (!file) {
+      const filename = `${Date.now()}.jpg`;
+      tempPath = await this.cameraService.captureImage(filename);
+    } else {
+      tempPath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
+      fs.writeFileSync(tempPath, file.buffer);
     }
 
-    const uploadDir = path.join(__dirname, '..', '..', 'uploads');
-    fs.mkdirSync(uploadDir, { recursive: true });
+    const detections = await this.faceService.detectFace(tempPath);
 
-    let tempPath: string | undefined;
-
-    try {
-      // If no file provided, capture image using Raspberry Pi camera
-      if (!file) {
-        const filename = `${Date.now()}.jpg`;
-        tempPath = await this.cameraService.captureImage(filename);
-      } else {
-        // Save the uploaded file locally for processing
-        tempPath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
-        fs.writeFileSync(tempPath, file.buffer);
-      }
-
-      // Detect face(s) from image
-      const detections = await this.faceService.detectFace(tempPath);
-
-      if (detections.length === 0) {
-        return {
-          message: 'No faces were detected in the image. Please try again with a clearer image.',
-        };
-      }
-
-      // Save each face descriptor with the registration number
-      for (const { descriptor } of detections) {
-        await this.faceService.saveDescriptor({ descriptor, registrationNumber });
-      }
-
+    if (detections.length === 0) {
       return {
-        message: `${detections.length} face(s) detected and descriptor(s) saved`,
-        registrationNumber,
+        message: 'No faces were detected in the image. Please try again with a clearer image.',
+        status:"false"
       };
-    } catch (err) {
-      this.logger.error('Detection failed', err.stack || err.message);
-      throw new InternalServerErrorException('Face detection failed.');
-    } finally {
-      // Delete temp image
-      if (tempPath && fs.existsSync(tempPath)) {
-        fs.unlinkSync(tempPath);
-      }
+    }
+
+    for (const { descriptor } of detections) {
+      await this.faceService.saveDescriptor({ descriptor, registrationNumber });
+    }
+
+    // Call the correct method
+    await this.attendanceService.enroll(registrationNumber, name || undefined);
+
+    return {
+      message: `${detections.length} face(s) detected and descriptor(s) saved`,
+      status:"true",
+      registrationNumber,
+      name: name || null,
+    };
+  } catch (err) {
+    this.logger.error('Detection failed', err.stack || err.message);
+    throw new InternalServerErrorException('Face detection failed.');
+  } finally {
+    if (tempPath && fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
     }
   }
+}
+
+
 
   /**
    * @route POST /face/recognize

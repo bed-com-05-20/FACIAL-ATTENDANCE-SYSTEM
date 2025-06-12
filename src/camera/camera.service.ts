@@ -8,7 +8,7 @@ export class CameraService {
   private readonly logger = new Logger(CameraService.name);
 
   // Base URL of your Flask server (no endpoint or query here)
-  private readonly piBaseUrl = 'http://488e-137-115-7-146.ngrok-free.app';
+  private readonly piBaseUrl = 'https://fb49-102-70-93-108.ngrok-free.app';
 
   
     //Capture images from the Flask Pi server.
