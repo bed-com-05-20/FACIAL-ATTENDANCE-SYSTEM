@@ -9,20 +9,21 @@ import { CreateCourseDto } from './dto/create-course.dto';
 export class AttendanceService {
   attendanceService: any;
   attendanceRepository: any;
+
   constructor(
     @InjectRepository(Students)
     private readonly studentsRepo: Repository<Students>,
 
     @InjectRepository(Course)
     private courseRepo: Repository<Course>,
-
   ) {}
 
   /**
-   * Enroll student if not already in DB. Return message accordingly.
-   * If name is not provided but the student exists, skip enrollment.
+   * Enrolls a student using registration number and optional name.
+   * If student already exists, returns existing student with message.
+   * If not, and name is provided, creates and saves the new student.
    */
-    async enroll(registrationNumber: string, name?: string) {
+  async enroll(registrationNumber: string, name?: string) {
     const existing = await this.studentsRepo.findOne({ where: { registrationNumber } });
 
     if (existing) {
@@ -53,75 +54,73 @@ export class AttendanceService {
     };
   }
 
-  
   /**
-   * Marks attendance based on the registration number.
-   * Prevents multiple markings within same exam session.
+   * Marks attendance for a student on the current date.
+   * Prevents duplicate marking within the same day.
    */
-async markAttendance(registrationNumber: string) {
-  const student = await this.studentsRepo.findOne({
-    where: { registrationNumber },
-  });
+  async markAttendance(registrationNumber: string) {
+    const student = await this.studentsRepo.findOne({
+      where: { registrationNumber },
+    });
 
-  if (!student) {
-    throw new NotFoundException('Student not found');
-  }
-
-  const currentTime = new Date();
-
-  // Check if attendance was already marked today
-  if (student.lastMarkedAt) {
-    const lastMarked = new Date(student.lastMarkedAt);
-
-    const alreadyMarkedToday =
-      currentTime.getFullYear() === lastMarked.getFullYear() &&
-      currentTime.getMonth() === lastMarked.getMonth() &&
-      currentTime.getDate() === lastMarked.getDate();
-
-    if (alreadyMarkedToday) {
-      return {
-        message: 'Attendance already marked today.',
-        student: {
-          registrationNumber: student.registrationNumber,
-          name: student.name,
-          status: student.status,
-          markedAt: lastMarked.toLocaleString('en-MW', {
-            timeZone: 'Africa/Blantyre',
-          }),
-        },
-      };
+    if (!student) {
+      throw new NotFoundException('Student not found');
     }
+
+    const currentTime = new Date();
+
+    // Check if attendance was already marked today
+    if (student.lastMarkedAt) {
+      const lastMarked = new Date(student.lastMarkedAt);
+
+      const alreadyMarkedToday =
+        currentTime.getFullYear() === lastMarked.getFullYear() &&
+        currentTime.getMonth() === lastMarked.getMonth() &&
+        currentTime.getDate() === lastMarked.getDate();
+
+      if (alreadyMarkedToday) {
+        return {
+          message: 'Attendance already marked today.',
+          student: {
+            registrationNumber: student.registrationNumber,
+            name: student.name,
+            status: student.status,
+            markedAt: lastMarked.toLocaleString('en-MW', {
+              timeZone: 'Africa/Blantyre',
+            }),
+          },
+        };
+      }
+    }
+
+    // Mark the student as present for today
+    student.status = 'present';
+    student.lastMarkedAt = currentTime;
+
+    await this.studentsRepo.save(student);
+
+    return {
+      message: 'Attendance marked as present.',
+      student: {
+        registrationNumber: student.registrationNumber,
+        name: student.name,
+        status: student.status,
+        markedAt: currentTime.toLocaleString('en-MW', {
+          timeZone: 'Africa/Blantyre',
+        }),
+      },
+    };
   }
-
-  // Mark the student as present
-  student.status = 'present';
-  student.lastMarkedAt = currentTime;
-
-  await this.studentsRepo.save(student);
-
-  return {
-    message: 'Attendance marked as present.',
-    student: {
-      registrationNumber: student.registrationNumber,
-      name: student.name,
-      status: student.status,
-      markedAt: currentTime.toLocaleString('en-MW', {
-        timeZone: 'Africa/Blantyre',
-      }),
-    },
-  };
-}
-
 
   /**
-   * Retrieves all student attendance records.
+   * Returns a list of all student attendance records.
    */
   async getAttendanceRecords() {
     return this.studentsRepo.find();
   }
 
   /**
-   * Deletes a student using registration number.
+   * Deletes a student record using their registration number.
    */
   async deleteStudent(registrationNumber: string) {
     const student = await this.studentsRepo.findOne({ where: { registrationNumber } });
@@ -135,7 +134,8 @@ async markAttendance(registrationNumber: string) {
   }
 
   /**
-   * Marks all students as absent and clears last marked timestamps.
+   * Marks all students as absent and clears their `lastMarkedAt` timestamps.
+   * Useful for resetting daily attendance.
    */
   async markAllAsAbsent() {
     const students = await this.studentsRepo.find();
@@ -154,20 +154,21 @@ async markAttendance(registrationNumber: string) {
     };
   }
 
-
   /*
-  this is history generation functions
-  */ 
-    async createCourseWithStudents(dto: CreateCourseDto): Promise<Course> {
-      const students = await this.studentsRepo.find({
-    where: {
-      registrationNumber: In(dto.studentIds),
-    },
-  });
+   * Creates a course and links existing students to it using registration numbers.
+   * Throws error if no matching students are found.
+   */
+  async createCourseWithStudents(dto: CreateCourseDto): Promise<Course> {
+    const students = await this.studentsRepo.find({
+      where: {
+        registrationNumber: In(dto.studentIds),
+      },
+    });
 
-  if (students.length === 0) {
-    throw new NotFoundException('No students found with provided registration numbers.');
-  }
+    if (students.length === 0) {
+      throw new NotFoundException('No students found with provided registration numbers.');
+    }
+
     const course = this.courseRepo.create({
       examName: dto.examName,
       room: dto.room,
@@ -181,6 +182,10 @@ async markAttendance(registrationNumber: string) {
     return this.courseRepo.save(course);
   }
 
+  /**
+   * Retrieves a specific course with its associated students.
+   * Throws an exception if the course is not found.
+   */
   async findCourseWithStudents(id: number): Promise<Course> {
     const course = await this.courseRepo.findOne({
       where: { id },
@@ -191,41 +196,45 @@ async markAttendance(registrationNumber: string) {
     return course;
   }
 
+  /**
+   * Returns all courses along with their associated students.
+   */
   async findAllCoursesWithStudents(): Promise<Course[]> {
     return this.courseRepo.find({
       relations: ['students'],
     });
   }
 
-async deleteCourses(ids: number[]) {
-  const courses = await this.courseRepo.find({
-    where: { id: In(ids) },
-    relations: ['students'],
-  });
+  /**
+   * Deletes multiple courses by IDs.
+   * Unlinks associated students before deletion.
+   * Returns which courses were deleted and which were not found.
+   */
+  async deleteCourses(ids: number[]) {
+    const courses = await this.courseRepo.find({
+      where: { id: In(ids) },
+      relations: ['students'],
+    });
 
-  const existingIds = courses.map(course => course.id);
-  const notFound = ids.filter(id => !existingIds.includes(id));
+    const existingIds = courses.map(course => course.id);
+    const notFound = ids.filter(id => !existingIds.includes(id));
 
-  if (existingIds.length === 0) {
-    throw new NotFoundException('No matching courses found to delete.');
+    if (existingIds.length === 0) {
+      throw new NotFoundException('No matching courses found to delete.');
+    }
+
+    // Unlink students before deletion to avoid FK constraint issues
+    for (const course of courses) {
+      course.students = [];
+      await this.courseRepo.save(course);
+    }
+
+    // Proceed to delete the courses
+    await this.courseRepo.delete(existingIds);
+
+    return {
+      deleted: existingIds,
+      notFound,
+    };
   }
-
-  // Remove student associations first
-  for (const course of courses) {
-    course.students = [];
-    await this.courseRepo.save(course);
-  }
-
-  // Now delete courses
-  await this.courseRepo.delete(existingIds);
-
-  return {
-    deleted: existingIds,
-    notFound,
-  };
-}
-
-
-  
-  
 }

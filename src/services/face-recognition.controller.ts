@@ -28,7 +28,7 @@ import {
 import { validate as isUUID } from 'uuid';
 import { AttendanceService } from 'src/attendance/attendance.service';
 
-@ApiTags('Face Recognition') // Groups all routes under the "Face Recognition" category in Swagger UI
+@ApiTags('Face Recognition') 
 @Controller('face')
 export class FaceRecognitionController {
   [x: string]: any;

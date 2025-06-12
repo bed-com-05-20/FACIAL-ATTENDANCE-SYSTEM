@@ -33,14 +33,10 @@ import { Course } from './attendance/course.entity';
     AttendanceModule,
     FaceRecognitionModule,
     CameraModule,
-    GatewayModule, // This module should handle the controller/service
+    GatewayModule, 
   ],
   controllers: [],
   providers: [FaceGateway],
   
-  
-  // controllers: [AppController, UsersController],
-  // providers: [AppService, UsersService],
- //exports: [UsersService, FaceRecognitionModule],
 })
 export class AppModule {}

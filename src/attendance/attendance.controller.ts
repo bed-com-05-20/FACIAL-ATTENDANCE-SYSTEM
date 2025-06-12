@@ -11,9 +11,9 @@ import { CreateCourseDto } from './dto/create-course.dto';
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
-
   /**
-   * Mock enroll a student with name and registration number
+   * Enroll a student (mock/demo purposes)
+   * Expects name and registration number in body
    */
   @Post('mock-enroll')
   @ApiOperation({ summary: 'Mock enroll a student' })
@@ -24,7 +24,8 @@ export class AttendanceController {
   }
 
   /**
-   * Mark attendance for a student using registration number
+   * Mark attendance for a specific student
+   * Uses registration number from request body
    */
   @Post('mark')
   @ApiOperation({ summary: 'Mark attendance for a student' })
@@ -36,7 +37,7 @@ export class AttendanceController {
   }
 
   /**
-   * Get all attendance records
+   * Retrieve all attendance records
    */
   @Get()
   @ApiOperation({ summary: 'Get all attendance records' })
@@ -46,7 +47,7 @@ export class AttendanceController {
   }
 
   /**
-   * Delete a student by registration number
+   * Delete a student using their registration number
    */
   @Delete('/deleteStudent/:registrationNumber')
   @ApiOperation({ summary: 'Delete student by registration number' })
@@ -57,25 +58,22 @@ export class AttendanceController {
   }
 
   /**
-   * Mark all students as absent
+   * Mark all students as absent (e.g., at start of a new exam day)
    */
-@Get('mark-all-absent')
-@ApiOperation({ summary: 'Mark all students as absent' })
-@ApiResponse({ status: 200, description: 'All students marked as absent' })
-async markAllAbsent() {
-  const updatedStudents = await this.attendanceService.markAllAsAbsent();
-  return {
-    message: `${updatedStudents.students.length} student(s) marked as absent.`,
-    students: updatedStudents.students,
-  };
-}
+  @Get('mark-all-absent')
+  @ApiOperation({ summary: 'Mark all students as absent' })
+  @ApiResponse({ status: 200, description: 'All students marked as absent' })
+  async markAllAbsent() {
+    const updatedStudents = await this.attendanceService.markAllAsAbsent();
+    return {
+      message: `${updatedStudents.students.length} student(s) marked as absent.`,
+      students: updatedStudents.students,
+    };
+  }
 
-
-/*
-controller for course generation
-*/ 
-
-
+  /**
+   * Create a new course and associate students using their registration numbers
+   */
   @Post('/create-new-courses')
   @ApiOperation({ summary: 'Create a new course with assigned students' })
   @ApiResponse({ status: 201, description: 'Course successfully created', type: Course })
@@ -84,6 +82,9 @@ controller for course generation
     return this.attendanceService.createCourseWithStudents(createCourseDto);
   }
 
+  /**
+   * Fetch a course by its ID, including all enrolled students
+   */
   @Get('/getCourseById/:id')
   @ApiOperation({ summary: 'Get a single course by ID including enrolled students' })
   @ApiParam({ name: 'id', type: Number, description: 'ID of the course' })
@@ -92,6 +93,9 @@ controller for course generation
     return this.attendanceService.findCourseWithStudents(id);
   }
 
+  /**
+   * Retrieve all courses along with their enrolled students
+   */
   @Get('/getAllCourses')
   @ApiOperation({ summary: 'Get all courses with their enrolled students' })
   @ApiResponse({ status: 200, description: 'List of courses retrieved', type: [Course] })
@@ -99,22 +103,26 @@ controller for course generation
     return this.attendanceService.findAllCoursesWithStudents();
   }
 
- @Delete('/deleteCourse')
-@ApiOperation({ summary: 'Delete one or more courses by their IDs' })
-@ApiBody({
-  schema: {
-    type: 'object',
-    properties: {
-      ids: {
-        type: 'array',
-        items: { type: 'number' },
-        example: [1, 2, 3],
+  /**
+   * Delete one or more courses using an array of IDs
+   * Expects body like: { ids: [1, 2, 3] }
+   */
+  @Delete('/deleteCourse')
+  @ApiOperation({ summary: 'Delete one or more courses by their IDs' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        ids: {
+          type: 'array',
+          items: { type: 'number' },
+          example: [1, 2, 3],
+        },
       },
     },
-  },
-})
-@ApiResponse({ status: 200, description: 'Deleted course IDs' })
-async delete(@Body() body: { ids: number[] }) {
-  return this.attendanceService.deleteCourses(body.ids);
-}
+  })
+  @ApiResponse({ status: 200, description: 'Deleted course IDs' })
+  async delete(@Body() body: { ids: number[] }) {
+    return this.attendanceService.deleteCourses(body.ids);
+  }
 }
