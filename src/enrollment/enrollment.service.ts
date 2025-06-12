@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EnrollmentDto } from 'src/dto/enrollment.dto';
+import { EnrollmentDto } from 'src/attendance/dto/enrollment.dto';
 import { EnrollmentEntity } from 'src/entity/enrollment.entity';
 // import { AttendanceEntity } from 'src/entity/attendance.entity';
 import { Repository } from 'typeorm';
