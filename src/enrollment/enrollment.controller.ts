@@ -1,7 +1,7 @@
 import { Controller, Post, Get, Patch, Body, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { EnrollmentService } from './enrollment.service';
-import { EnrollmentDto } from 'src/dto/enrollment.dto';
+import { EnrollmentDto } from 'src/attendance/dto/enrollment.dto';
 
 @ApiTags('students')
 @Controller('students')
