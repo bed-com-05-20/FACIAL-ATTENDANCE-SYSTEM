@@ -2,9 +2,9 @@ import { Controller, Post, Body, Get, Delete, Param, UsePipes, ValidationPipe, P
 import { AttendanceService } from './attendance.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
 import { Course } from './course.entity';
-import { CreateCourseDto } from 'src/dto/create-course.dto';
-import { MockEnrollDto } from 'src/dto/mockenroll_dto';
-import { MarkAttendanceDto } from 'src/dto/markattendance_dto';
+import { CreateCourseDto } from 'src/attendance/dto/create-course.dto';
+import { MockEnrollDto } from 'src/attendance/dto/mockenroll_dto';
+import { MarkAttendanceDto } from 'src/attendance/dto/markattendance_dto';
 
 @ApiTags('Attendance') 
 @Controller('attendance')
