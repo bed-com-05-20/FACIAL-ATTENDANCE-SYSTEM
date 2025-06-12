@@ -76,7 +76,7 @@ controller for course generation
 */ 
 
 
-  @Post('/create-new-coures')
+  @Post('/create-new-courses')
   @ApiOperation({ summary: 'Create a new course with assigned students' })
   @ApiResponse({ status: 201, description: 'Course successfully created', type: Course })
   @ApiBody({ type: CreateCourseDto })
