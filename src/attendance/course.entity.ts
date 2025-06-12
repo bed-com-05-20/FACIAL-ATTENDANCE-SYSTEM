@@ -26,5 +26,6 @@ export class Course {
   supervisor: string;
 
   @ManyToMany(() => Students, student => student.courses)
+   @JoinTable()
   students: Students[];
 }
