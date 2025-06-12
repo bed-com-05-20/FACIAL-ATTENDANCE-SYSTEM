@@ -38,9 +38,6 @@ import { Course } from './attendance/course.entity';
   controllers: [],
   providers: [FaceGateway],
   
-  
-  // controllers: [AppController, UsersController],
-  // providers: [AppService, UsersService],
- //exports: [UsersService, FaceRecognitionModule],
+
 })
 export class AppModule {}
