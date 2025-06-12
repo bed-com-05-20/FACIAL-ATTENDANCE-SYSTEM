@@ -164,7 +164,7 @@ export class FaceRecognitionService implements OnModuleInit {
     }));
   }
 
-  // Retrieve all descriptors from the database (for admin or debugging)
+  // Retrieve all descriptors from the database 
   async getAllDescriptors(): Promise<any[]> {
     const all = await this.faceRepository.find();
     return all.map((face) => ({
