@@ -28,7 +28,7 @@ import {
 import { validate as isUUID } from 'uuid';
 import { AttendanceService } from 'src/attendance/attendance.service';
 
-@ApiTags('Face Recognition') // Groups all routes under the "Face Recognition" category in Swagger UI
+@ApiTags('Face Recognition') 
 @Controller('face')
 export class FaceRecognitionController {
   [x: string]: any;
@@ -125,170 +125,65 @@ async detectAndRegister(
    * @summary Recognizes a face and returns the matched registration number(s)
    * @description Accepts an image upload or live capture, detects face(s), and matches them with stored descriptors
    */
- @Post('recognize')
-@ApiOperation({ summary: 'Recognize face and mark attendance' })
-@ApiConsumes('multipart/form-data')
-@ApiBody({
-  schema: {
-    type: 'object',
-    properties: {
-      file: { type: 'string', format: 'binary', description: 'Optional image file' },
-      examSessionId: { type: 'number', description: 'ID of the exam session' },
-      courseCode: { type: 'string', description: 'Course code (used if session not provided)', nullable: true },
-      courseName: { type: 'string', description: 'Course name (used if session not provided)', nullable: true },
+  @Post('recognize')
+  @ApiOperation({ summary: 'Recognize face and mark attendance' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary', description: 'Optional image file' },
+      },
     },
-    required: [],
-  },
-})
-@ApiResponse({ status: 200, description: 'Recognition results returned' })
-@ApiResponse({ status: 500, description: 'Face recognition failed' })
-@UseInterceptors(FileInterceptor('file'))
-async recognizeFace(
-  @UploadedFile() file: Express.Multer.File,
-  @Body() body: RecognizeFaceDto,
-) {
-  const uploadDir = path.join(__dirname, '..', '..', 'uploads');
-  fs.mkdirSync(uploadDir, { recursive: true });
+  })
+  @ApiResponse({ status: 200, description: 'Recognition results returned' })
+  @ApiResponse({ status: 500, description: 'Face recognition failed' })
+  @UseInterceptors(FileInterceptor('file'))
+  async recognizeFace(@UploadedFile() file: Express.Multer.File) {
+    const uploadDir = path.join(__dirname, '..', '..', 'uploads');
+    fs.mkdirSync(uploadDir, { recursive: true });
 
-  let tempPath: string | undefined;
+    let tempPath: string | undefined;
 
-  try {
-    if (!file) {
-      const filename = `${Date.now()}.jpg`;
-      tempPath = await this.cameraService.captureImage(filename);
-    } else {
-      tempPath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
-      fs.writeFileSync(tempPath, file.buffer);
-    }
-
-    const detections = await this.faceService.detectFace(tempPath);
-
-    if (detections.length === 0) {
-      return { message: 'No faces were detected. Try again with a clearer image.' };
-    }
-
-    const recognitionResults = await this.faceService.recognizeUser(detections);
-
-    if (recognitionResults.length === 0) {
-      return { message: 'Face not recognized. No match found.' };
-    }
-
-let session: ExamSessionEntity | null = null;
-
-    if (body.examSessionId) {
-      session = await this.examSessionRepo.findOne({ where: { id: body.examSessionId } });
-      if (!session) {
-        throw new BadRequestException('Invalid exam session ID.');
+    try {
+      // Capture image if file is not provided
+      if (!file) {
+        const filename = `${Date.now()}.jpg`;
+        tempPath = await this.cameraService.captureImage(filename);
+      } else {
+        // Save uploaded image
+        tempPath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
+        fs.writeFileSync(tempPath, file.buffer);
       }
-    } else if (body.courseCode && body.courseName) {
-      session = this.examSessionRepo.create({
-        courseCode: body.courseCode,
-        courseName: body.courseName,
-        scheduledAt: new Date(),
-      });
-      session = await this.examSessionRepo.save(session);
-    } else {
-      throw new BadRequestException('Provide examSessionId or courseCode and courseName.');
-    }
 
-    for (const result of recognitionResults) {
-      if (!result.registrationNumber) continue;
+      // Detect face(s) in the image
+      const detections = await this.faceService.detectFace(tempPath);
 
-      const student = await this.studentRepo.findOne({
-        where: { registrationNumber: result.registrationNumber },
-      });
-      if (!student) continue;
-
-      const alreadyMarked = await this.attendanceHistoryRepo.findOne({
-        where: {
-          student: { id: student.id },
-          examSession: { id: session.id },
-        },
-      });
-
-      if (!alreadyMarked) {
-        await this.attendanceHistoryRepo.save({
-          student,
-          examSession: session,
-          status: 'Present',
-        });
+      if (detections.length === 0) {
+        return {
+          message: 'No faces were detected for recognition. Ensure your face is clearly visible.',
+        };
       }
-    }
 
-    return recognitionResults;
-  } catch (err) {
-    this.logger.error('Recognition failed', err.stack || err.message);
-    throw new InternalServerErrorException('Face recognition failed.');
-  } finally {
-    if (tempPath && fs.existsSync(tempPath)) {
-      fs.unlinkSync(tempPath);
+      // Attempt to match detected descriptors with saved ones
+      const recognitionResults = await this.faceService.recognizeUser(detections);
+
+      if (recognitionResults.length === 0) {
+        return {
+          message: 'Face not recognized. No match found in the system.',
+        };
+      }
+
+      return recognitionResults;
+    } catch (err) {
+      this.logger.error('Recognition failed', err.stack || err.message);
+      throw new InternalServerErrorException('Face recognition failed.');
+    } finally {
+      if (tempPath && fs.existsSync(tempPath)) {
+        fs.unlinkSync(tempPath);
+      }
     }
   }
-}
-
-
-//   @Post('recognize')
-//   @ApiOperation({ summary: 'Recognize face and mark attendance' })
-//   @ApiConsumes('multipart/form-data')
-// @ApiBody({
-//   schema: {
-//     type: 'object',
-//     properties: {
-//       file: { type: 'string', format: 'binary', description: 'Optional image file' },
-//       examSessionId: { type: 'number', description: 'ID of the exam session' },
-//     },
-//     required: ['examSessionId'],
-//   },
-// })
-
-//   @ApiResponse({ status: 200, description: 'Recognition results returned' })
-//   @ApiResponse({ status: 500, description: 'Face recognition failed' })
-//   @UseInterceptors(FileInterceptor('file'))
-//   async recognizeFace(@UploadedFile() file: Express.Multer.File) {
-//     const uploadDir = path.join(__dirname, '..', '..', 'uploads');
-//     fs.mkdirSync(uploadDir, { recursive: true });
-
-//     let tempPath: string | undefined;
-
-//     try {
-//       // Capture image if file is not provided
-//       if (!file) {
-//         const filename = `${Date.now()}.jpg`;
-//         tempPath = await this.cameraService.captureImage(filename);
-//       } else {
-//         // Save uploaded image
-//         tempPath = path.join(uploadDir, `${Date.now()}-${file.originalname}`);
-//         fs.writeFileSync(tempPath, file.buffer);
-//       }
-
-//       // Detect face(s) in the image
-//       const detections = await this.faceService.detectFace(tempPath);
-
-//       if (detections.length === 0) {
-//         return {
-//           message: 'No faces were detected for recognition. Ensure your face is clearly visible.',
-//         };
-//       }
-
-//       // Attempt to match detected descriptors with saved ones
-//       const recognitionResults = await this.faceService.recognizeUser(detections);
-
-//       if (recognitionResults.length === 0) {
-//         return {
-//           message: 'Face not recognized. No match found in the system.',
-//         };
-//       }
-
-//       return recognitionResults;
-//     } catch (err) {
-//       this.logger.error('Recognition failed', err.stack || err.message);
-//       throw new InternalServerErrorException('Face recognition failed.');
-//     } finally {
-//       if (tempPath && fs.existsSync(tempPath)) {
-//         fs.unlinkSync(tempPath);
-//       }
-//     }
-//   }
 
   /**
    * @route DELETE /face/all
@@ -350,82 +245,3 @@ let session: ExamSessionEntity | null = null;
     return { message: 'Descriptor deleted successfully' };
   }
 }
-
-@Controller('attendance-history')
-export class AttendanceHistoryController {
-  constructor(
-    @InjectRepository(AttendanceHistoryEntity)
-    private readonly attendanceHistoryRepo: Repository<AttendanceHistoryEntity>,
-
-    @InjectRepository(ExamSessionEntity)
-    private readonly examSessionRepo: Repository<ExamSessionEntity>,
-  ) {}
-
-  @Get(':examSessionId')
-  async getSessionAttendance(@Param('examSessionId') examSessionId: number) {
-    const session = await this.examSessionRepo.findOne({ where: { id: examSessionId } });
-
-    if (!session) {
-      throw new NotFoundException(`Exam session with ID ${examSessionId} not found.`);
-    }
-
-    const attendanceRecords = await this.attendanceHistoryRepo.find({
-      where: { examSession: { id: examSessionId } },
-      relations: ['student', 'examSession'],
-    });
-
-    return {
-      session: {
-        id: session.id,
-        courseCode: session.courseCode,
-        courseName: session.courseName,
-        scheduledAt: session.scheduledAt,
-      },
-      attendees: attendanceRecords.map(record => ({
-        id: record.student.id,
-        name: record.student.name,
-        registrationNumber: record.student.registrationNumber,
-        status: record.status,
-        markedAt: record.markedAt,
-      })),
-    };
-  }
-}
-
-
-// import {
-//   Controller,
-//   Post,
-//   UploadedFile,
-//   UseInterceptors,
-//   Body,
-//   InternalServerErrorException,
-//   Logger,
-//   BadRequestException,
-// } from '@nestjs/common';
-// import { FileInterceptor } from '@nestjs/platform-express';
-// import * as fs from 'fs';
-// import * as path from 'path';
-// import { CameraService } from '../camera/camera.service';
-// import { FaceRecognitionService } from './face-recognition.services';
-// import { ApiTags, ApiOperation, ApiConsumes, ApiBody, ApiResponse } from '@nestjs/swagger';
-// import { InjectRepository } from '@nestjs/typeorm';
-// import { Repository } from 'typeorm';
-// import { Students } from 'src/attendance/students.entity';
-// import { ExamSessionEntity } from 'src/entity/examsession.entity';
-// import { AttendanceHistoryEntity } from 'src/entity/history.entity';
-// @ApiTags('Face Recognition')
-// @Controller('face')
-// export class FaceRecognitionController {
-//   private readonly logger = new Logger(FaceRecognitionController.name);
-
-//   constructor(
-//     private readonly faceService: FaceRecognitionService,
-//     private readonly cameraService: CameraService,
-//     @InjectRepository(Students) private studentRepo: Repository<Students>,
-//     @InjectRepository(ExamSessionEntity) private examSessionRepo: Repository<ExamSessionEntity>,
-//     @InjectRepository(AttendanceHistoryEntity) private attendanceHistoryRepo: Repository<AttendanceHistoryEntity>,
-//   ) {}
-
-  
-// }
