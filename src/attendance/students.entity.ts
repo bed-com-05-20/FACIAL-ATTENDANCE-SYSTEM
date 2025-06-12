@@ -26,6 +26,7 @@ export class Students {
   faceEntity: FaceEntity;
 
   @ManyToMany(() => Course, course => course.students)
+  @JoinTable()
   courses: Course[];
 
 }
