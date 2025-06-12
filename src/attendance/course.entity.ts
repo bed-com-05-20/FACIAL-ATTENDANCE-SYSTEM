@@ -25,6 +25,6 @@ export class Course {
   @Column()
   supervisor: string;
 
-  @ManyToMany(() => Students, student => student.courses, {cascade: true})
+  @ManyToMany(() => Students, student => student.courses)
   students: Students[];
 }
